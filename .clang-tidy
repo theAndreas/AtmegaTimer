@@ -186,3 +186,5 @@ CheckOptions:
   readability-identifier-naming.EnumConstantPrefix: k
   readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
   readability-identifier-naming.MacroDefinitionIgnoredRegexp: '^[A-Z][A-Z0-9_]*_$'
+  # The project's: array mimics std::array, which avr-gcc lacks, and takes its name.
+  readability-identifier-naming.StructIgnoredRegexp: '^array$'
