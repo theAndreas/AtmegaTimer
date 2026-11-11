@@ -27,8 +27,15 @@ namespace atmega_timer {
  * compiler writes it where the datasheet says.
  */
 struct Timer2Traits {
-  /*! \brief A time in microseconds, long enough for Timer2::kPeriodMax. */
-  using TimeType = atmega_timer::TimeType;
+  /*!
+   * \brief A time in microseconds: 32 bits below 8 MHz, where the longest
+   *        period does not fit into 16.
+   */
+#if F_CPU < 8000000UL
+  using TimeType = uint32_t;
+#else
+  using TimeType = uint16_t;
+#endif
 
   /*! \brief The values of the clock select bits CS22..CS20. */
   enum class ClockSelect : uint8_t {

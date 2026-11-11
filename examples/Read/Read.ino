@@ -40,7 +40,8 @@ void setup() {
   Check(timer.Start(), F("Start"));
 
   delay(20);
-  atmega_timer::Result<atmega_timer::TimeType> const elapsed{timer.Read()};
+  atmega_timer::Result<atmega_timer::Timer2::TimeType> const elapsed{
+      timer.Read()};
   Check(elapsed.GetError(), F("Read"));
   Serial.print(F("Since the bottom: "));
   Serial.print(elapsed.GetValue());

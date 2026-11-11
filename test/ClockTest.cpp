@@ -19,6 +19,8 @@
 namespace atmega_timer {
 namespace {
 
+using TimeType = Timer2::TimeType;
+
 constexpr uint64_t kClock{F_CPU};
 constexpr uint64_t kMicrosecondsPerSecond{1000000};
 

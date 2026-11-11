@@ -21,12 +21,14 @@
 namespace atmega_timer {
 namespace {
 
+using TimeType = Timer2::TimeType;
+
 // Traits on the registers of Timer2 whose every other value differs from
 // Timer2Traits, so that a test shows where Timer takes it from: other mode
 // bits, the prescalers 1, 8, 64 and 256, pin 9 and COM2B0, and the interrupt
 // and its flag at bits 1 and 2.
 struct OtherTraits {
-  using TimeType = atmega_timer::TimeType;
+  using TimeType = Timer2Traits::TimeType;
 
   enum class ClockSelect : uint8_t {
     kNoClock = 0,
