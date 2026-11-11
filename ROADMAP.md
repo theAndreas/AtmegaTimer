@@ -22,7 +22,7 @@ and in CTC.
 | A-5 | Timer3, Timer4 and Timer5 of the ATmega2560, after A-3 and A-4: their traits and objects, only where `__AVR_ATmega2560__` is defined. Pins: Timer3 5, 2, 3; Timer4 6, 7, 8; Timer5 46, 45, 44. `Servo` takes Timer5 first on the Mega, then 1, 3 and 4; the README says so | open |
 | A-6 | CTC for every timer, after A-3: `Ctc<Traits>`, the period counted once rather than up and down, so twice the resolution and half the longest period, and `Read()` without the wait of a step to find the direction. Timer2 in mode 2 with OCR2A as the top, the others in mode 12 with ICRn. Whether a channel can give the period as a toggle, at half the frequency, is decided here | open |
 | A-7 | SelfCheck in simavr, after A-6: `examples/SelfCheck`, the period counted in callbacks and, where simavr models it, the PWM measured. simavr counts Timer2 in CTC and fast PWM but not in phase correct PWM (TimerTwo OIL 5, simavr #442); whether it models Timer1 in mode 8 is measured here first. Until then SelfCheck runs CTC only | open |
-| A-8 | TimerTwo points to AtmegaTimer, after A-9: TimerTwo 2.0.0 does not go to the Library Manager, its OIL 4 is dropped, its README points here, and the repository is archived | open |
+| A-8 | TimerTwo points to AtmegaTimer, after A-9: TimerTwo 2.0.0 does not go to the Library Manager, its OIL 4 is dropped, its README points here, and the repository is archived. Two steps do not wait for A-9: the commit A-1 takes, 10f9315, is tagged `v2.0.0` in TimerTwo, so that what AtmegaTimer starts from has a name; and as soon as AtmegaTimer is public, TimerTwo's README says that it is developed on here, so that issues and pull requests come here | open |
 | A-9 | Release 1.0.0 and the Library Manager, after A-5 and A-6: the README with the API, the timers and their pins per board, what each timer takes from the core and from other libraries, and the table of flash and RAM between `<!-- sizes -->` markers; the tag, `release.yml`, and the request to the Arduino Library Manager, under the name AtmegaTimer, free on 2026-11-11 | open |
 
 ## Decisions
@@ -49,3 +49,6 @@ and in CTC.
   Timer1.
 - **`Status`, `Error` and `Result` as in TimerTwo 2.0.0**, and with them its state machine and its
   names.
+- **TimerTwo is not renamed to AtmegaTimer**, which would keep its stars and forks: the history
+  here begins at the template, not at TimerTwo's, and its forks and the links to its commits would
+  point to a history gone from its `main`.
