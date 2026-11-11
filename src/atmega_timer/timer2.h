@@ -68,6 +68,9 @@ struct Timer2Traits {
   static constexpr uint8_t kModeTccra{1U << WGM20};
   /*! \brief TCCR2B in mode 5: WGM22, and no clock. */
   static constexpr uint8_t kModeTccrb{1U << WGM22};
+  /*! \brief Whether the hardware buffers the top: OCR2A is, and taken at the
+   * top in mode 5. */
+  static constexpr bool kTopIsBuffered{true};
   /*! \brief The bit of TIMSK2 that enables the overflow interrupt. */
   static constexpr uint8_t kOverflowInterruptBit{TOIE2};
   /*! \brief The bit of TIFR2 that flags an overflow. */

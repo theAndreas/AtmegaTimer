@@ -64,6 +64,9 @@ struct Timer1Traits {
   static constexpr uint8_t kModeTccra{0U};
   /*! \brief TCCR1B in mode 8: WGM13, and no clock. */
   static constexpr uint8_t kModeTccrb{1U << WGM13};
+  /*! \brief Whether the hardware buffers the top: ICR1 is not: written below
+   * the counter, it lets the counter run on to 65535. */
+  static constexpr bool kTopIsBuffered{false};
   /*! \brief The bit of TIMSK1 that enables the overflow interrupt. */
   static constexpr uint8_t kOverflowInterruptBit{TOIE1};
   /*! \brief The bit of TIFR1 that flags an overflow, at the bottom. */

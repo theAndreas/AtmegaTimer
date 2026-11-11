@@ -203,6 +203,147 @@ TEST_F(Timer1Test, ReadHoldsTheStepsOfTheLongestPeriod) {
   EXPECT_EQ(result.GetValue(), 8382080U);
 }
 
+// ICR1 is not buffered: a top written below the counter would let it run on
+// to 65535. While it counts, a new period waits for the bottom.
+TEST_F(Timer1Test, SetPeriodWhileRunningKeepsThePeriodUntilTheBottom) {
+  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Start(), Error::kOk);
+
+  EXPECT_EQ(timer().SetPeriod(10000U), Error::kOk);
+
+  EXPECT_EQ(ICR1, 8000);
+  EXPECT_EQ(ClockSelect(), 1);
+  EXPECT_TRUE(BitIsSet(TIMSK1, TOIE1));
+  EXPECT_TRUE(BitIsSet(TIFR1, TOV1));
+}
+
+TEST_F(Timer1Test, TheBottomTakesTheNewPeriod) {
+  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Start(), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+
+  timer().OnOverflow();
+
+  EXPECT_EQ(ICR1, 10000);
+  EXPECT_EQ(ClockSelect(), 2);
+  // No callback: the interrupt was for the period alone.
+  EXPECT_FALSE(BitIsSet(TIMSK1, TOIE1));
+}
+
+TEST_F(Timer1Test, TheBottomKeepsTheInterruptOfACallback) {
+  ASSERT_EQ(timer().Begin(1000U, CountOverflow), Error::kOk);
+  ASSERT_EQ(timer().Start(), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+
+  timer().OnOverflow();
+
+  EXPECT_EQ(ICR1, 10000);
+  EXPECT_TRUE(BitIsSet(TIMSK1, TOIE1));
+  EXPECT_EQ(overflow_calls, 1);
+}
+
+// The compare values are buffered: the hardware takes them at the bottom,
+// with the new top.
+TEST_F(Timer1Test, SetPeriodWhileRunningWritesTheCompareValuesAtOnce) {
+  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().EnablePwm<Channel::kA>(512), Error::kOk);
+  ASSERT_EQ(timer().Start(), Error::kOk);
+
+  ASSERT_EQ(timer().SetPeriod(2000U), Error::kOk);
+
+  // 512 / 1023 of the new top, 16000, rounded.
+  EXPECT_EQ(OCR1A, 8008);
+  EXPECT_EQ(ICR1, 8000);
+}
+
+TEST_F(Timer1Test, ADutyBeforeTheBottomIsAShareOfTheNewTop) {
+  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Start(), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(2000U), Error::kOk);
+
+  ASSERT_EQ(timer().EnablePwm<Channel::kA>(512), Error::kOk);
+
+  // 512 / 1023 of the new top, 16000, rounded.
+  EXPECT_EQ(OCR1A, 8008);
+}
+
+// The counter runs in the old period until the bottom: a step is still a
+// clock, 1/16 us, not 64 of them.
+TEST_F(Timer1Test, ReadBeforeTheBottomCountsInTheOldPeriod) {
+  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Start(), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(100000U), Error::kOk);
+  TCNT1.Set(800, true);
+
+  Result<TimeType> const result{timer().Read()};
+
+  ASSERT_TRUE(result.IsOk());
+  EXPECT_EQ(result.GetValue(), 50U);
+}
+
+TEST_F(Timer1Test, DetachInterruptBeforeTheBottomKeepsItForThePeriod) {
+  ASSERT_EQ(timer().Begin(1000U, CountOverflow), Error::kOk);
+  ASSERT_EQ(timer().Start(), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+
+  timer().DetachInterrupt();
+
+  EXPECT_TRUE(BitIsSet(TIMSK1, TOIE1));
+  timer().OnOverflow();
+  EXPECT_EQ(ICR1, 10000);
+  EXPECT_FALSE(BitIsSet(TIMSK1, TOIE1));
+  EXPECT_EQ(overflow_calls, 0);
+}
+
+// Stopped, the counter may stand above the new top: Resume() would let it run
+// on. The period waits for the bottom there too.
+TEST_F(Timer1Test, SetPeriodWhileStoppedKeepsThePeriodUntilTheBottom) {
+  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Start(), Error::kOk);
+  ASSERT_EQ(timer().Stop(), Error::kOk);
+
+  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+  ASSERT_EQ(timer().Resume(), Error::kOk);
+
+  EXPECT_EQ(ICR1, 8000);
+  EXPECT_EQ(ClockSelect(), 1);
+  EXPECT_TRUE(BitIsSet(TIMSK1, TOIE1));
+}
+
+TEST_F(Timer1Test, AttachInterruptWhileStoppedKeepsItForThePeriod) {
+  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Start(), Error::kOk);
+  ASSERT_EQ(timer().Stop(), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+
+  ASSERT_EQ(timer().AttachInterrupt(CountOverflow), Error::kOk);
+
+  EXPECT_TRUE(BitIsSet(TIMSK1, TOIE1));
+}
+
+// Start() begins at the bottom, so it takes a period that waits at once.
+TEST_F(Timer1Test, StartTakesAWaitingPeriodAtOnce) {
+  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Start(), Error::kOk);
+  ASSERT_EQ(timer().Stop(), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+
+  ASSERT_EQ(timer().Start(), Error::kOk);
+
+  EXPECT_EQ(ICR1, 10000);
+  EXPECT_EQ(ClockSelect(), 2);
+  EXPECT_FALSE(BitIsSet(TIMSK1, TOIE1));
+}
+
+TEST_F(Timer1Test, SetPeriodBeforeStartTakesThePeriodAtOnce) {
+  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+
+  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+
+  EXPECT_EQ(ICR1, 10000);
+  EXPECT_FALSE(BitIsSet(TIMSK1, TOIE1));
+}
+
 TEST_F(Timer1Test, TheOverflowInterruptCallsTheCallbackOfTimer1) {
   ASSERT_EQ(timer1.Begin(1000U, CountOverflow), Error::kOk);
   ASSERT_EQ(timer1.Start(), Error::kOk);

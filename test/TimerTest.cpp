@@ -62,6 +62,7 @@ struct OtherTraits {
   // WGM21 alone.
   static constexpr uint8_t kModeTccra{0x02U};
   static constexpr uint8_t kModeTccrb{0U};
+  static constexpr bool kTopIsBuffered{true};
   static constexpr uint8_t kOverflowInterruptBit{1U};
   static constexpr uint8_t kOverflowFlagBit{2U};
 

@@ -20,6 +20,7 @@
 #include <Arduino.h>
 #include <avr/io.h>
 #include <stdint.h>
+#include <util/atomic.h>
 
 #include "atmega_timer/Utility/array.h"
 #include "atmega_timer/attributes.h"
@@ -122,13 +123,14 @@ constexpr uint32_t MicrosecondsOf(uint32_t clocks) {
  *                its prescalers, `kNoClock` at 0 and `kDivide1` at 1, the
  *                others in the values after it up to `kClockSelectLargest`,
  *                with `kShiftLargest` and `ShiftOf()`; `kModeTccra` and
- *                `kModeTccrb`, the bits of the mode; `kOverflowInterruptBit`
- *                and `kOverflowFlagBit`; `kFirstChannel` and `kChannelCount`,
- *                the channels that give a PWM, one after the other in Channel,
- *                and for each `PwmChannel<Output>`, with `kPin`,
- *                `kCompareOutputBit` and `Compare()`; and `Tccra()`, `Tccrb()`,
- *                `Top()`, `Timsk()`, `Tifr()` and `Tcnt()`, which return its
- *                registers.
+ *                `kModeTccrb`, the bits of the mode; `kTopIsBuffered`, whether
+ *                the hardware takes a new top at a turn of the counter, or at
+ *                once as ICR1; `kOverflowInterruptBit` and `kOverflowFlagBit`;
+ *                `kFirstChannel` and `kChannelCount`, the channels that give a
+ *                PWM, one after the other in Channel, and for each
+ *                `PwmChannel<Output>`, with `kPin`, `kCompareOutputBit` and
+ *                `Compare()`; and `Tccra()`, `Tccrb()`, `Top()`, `Timsk()`,
+ *                `Tifr()` and `Tcnt()`, which return its registers.
  */
 template <typename Traits>
 class Timer {
@@ -180,8 +182,15 @@ class Timer {
   }
 
   /*!
-   * \brief Sets the period of the interrupt and of the PWM; the duty of the PWM
-   *        keeps its share of it.
+   * \brief Sets the period of the interrupt and of the PWM; the duty of each
+   *        channel keeps its share of it.
+   *
+   * On Timer1, while it runs or is stopped, the period comes at the next
+   * bottom, at most one period later; until then the counter and Read() keep
+   * the old one. Its top, ICR1, is not buffered: written below the counter, it
+   * would let the counter run on to 65535. The overflow interrupt takes the new
+   * period, with no callback as well.
+   *
    * \param period the period in microseconds, up to kPeriodMax
    * \return Error::kNotBegun, or Error::kPeriodOutOfRange for a period too
    *         long, or too short for one step of the counter: 0, or 1 below 2 MHz
@@ -196,7 +205,11 @@ class Timer {
     if ((period > kPeriodMax) || (top == 0U)) {
       return Error::kPeriodOutOfRange;
     }
-    ApplyPeriod(top, clock_select);
+    if (WaitsForTheBottom()) {
+      DeferPeriod(top, clock_select);
+    } else {
+      ApplyPeriod(top, clock_select);
+    }
     return Error::kOk;
   }
 
@@ -210,6 +223,10 @@ class Timer {
     }
     if (state_ == State::kRunning) {
       return Error::kRunning;
+    }
+    // At 0 the counter is at its bottom, which a period waits for.
+    if (PeriodWaits()) {
+      TakeWaitingPeriod();
     }
     Traits::Tcnt() = 0U;
     SelectClock(clock_select_);
@@ -266,6 +283,8 @@ class Timer {
     callback_ = callback;
     if (state_ == State::kRunning) {
       EnableOverflowInterrupt();
+    } else if (PeriodWaits()) {
+      KeepOverflowInterruptForThePeriod();
     }
     return Error::kOk;
   }
@@ -278,6 +297,9 @@ class Timer {
     ClearBit(Traits::Timsk(), Traits::kOverflowInterruptBit);
     // After the interrupt is off, which calls through it.
     callback_ = nullptr;
+    if (PeriodWaits()) {
+      KeepOverflowInterruptForThePeriod();
+    }
   }
 
   /*!
@@ -326,7 +348,7 @@ class Timer {
       return Error::kDutyOutOfRange;
     }
     duties_[IndexOf(Output)] = duty;
-    PwmChannelOf<Output>::Compare() = CompareValue(duty);
+    Store(PwmChannelOf<Output>::Compare(), CompareValue(duty));
     return Error::kOk;
   }
 
@@ -355,14 +377,14 @@ class Timer {
       return Error::kNotRunning;
     }
     // Up and down, the steps of a 16-bit counter take 17 bits.
-    uint32_t steps{Traits::Tcnt()};
-    Counter next{Traits::Tcnt()};
+    uint32_t steps{Load(Traits::Tcnt())};
+    Counter next{Load(Traits::Tcnt())};
     while (next == steps) {
-      next = Traits::Tcnt();
+      next = Load(Traits::Tcnt());
     }
     // Counting down: up to the top, and back to where it is.
     if (next < steps) {
-      uint32_t const top{Traits::Top()};
+      uint32_t const top{Load(Traits::Top())};
       steps = (2U * top) - steps;
     }
     // The time is below kPeriodMax, which TimeType holds.
@@ -377,10 +399,15 @@ class Timer {
   Callback GetCallback() const { return callback_; }
 
   /*!
-   * \brief Calls the callback; for the overflow interrupt, which the source of
-   *        each timer defines, as timer2.cpp.
+   * \brief Takes a period that waits for the bottom, and calls the callback;
+   *        for the overflow interrupt, which the source of each timer defines,
+   *        as timer2.cpp.
    */
   void OnOverflow() {
+    if (PeriodWaits()) {
+      TakeWaitingPeriod();
+      SelectClock(clock_select_);
+    }
     Callback const callback{callback_};
     if (callback != nullptr) {
       callback();
@@ -430,21 +457,91 @@ class Timer {
     return 0U;
   }
 
-  // The compare value of a duty at the top, rounded: 0 is the bottom, which
-  // keeps the output low, and kDutyMax the top, which keeps it high. In 32
-  // bits: 255 * 1023 does not fit 16, 65535 * 1023 does 32.
-  static Counter CompareValue(uint16_t duty) {
-    uint32_t const product{static_cast<uint32_t>(Traits::Top()) * duty};
+  // The compare value of a duty at top_, rounded: 0 is the bottom, which keeps
+  // the output low, and kDutyMax the top, which keeps it high. In 32 bits:
+  // 255 * 1023 does not fit 16, 65535 * 1023 does 32.
+  Counter CompareValue(uint16_t duty) const {
+    uint32_t const product{static_cast<uint32_t>(top_) * duty};
     return static_cast<Counter>((product + internal::kDutyRounding) / kDutyMax);
   }
 
+  // A top that the hardware does not buffer waits for the bottom while the
+  // counter may stand above it: while it runs, and while it is stopped, as
+  // Resume() goes on from there.
+  bool WaitsForTheBottom() const {
+    bool const may_be_above{(state_ == State::kRunning) ||
+                            (state_ == State::kStopped)};
+    return !Traits::kTopIsBuffered && may_be_above;
+  }
+
+  // Whether a period waits for the bottom; never where the hardware buffers
+  // the top, so that the compiler leaves out what takes one there.
+  bool PeriodWaits() const { return !Traits::kTopIsBuffered && period_waits_; }
+
   void ApplyPeriod(Counter top, ClockSelect clock_select) {
     clock_select_ = clock_select;
+    top_ = top;
     Traits::Top() = top;
     ApplyDuties(ChannelIndex<0U>{});
     if (state_ == State::kRunning) {
       SelectClock(clock_select_);
     }
+  }
+
+  // The compare values go at once, as the hardware buffers them up to the
+  // bottom; the top and the prescaler wait for the overflow interrupt there.
+  // It is off meanwhile, as it reads what changes.
+  void DeferPeriod(Counter top, ClockSelect clock_select) {
+    ClearBit(Traits::Timsk(), Traits::kOverflowInterruptBit);
+    top_ = top;
+    waiting_clock_select_ = clock_select;
+    period_waits_ = true;
+    ApplyDuties(ChannelIndex<0U>{});
+    EnableOverflowInterrupt();
+  }
+
+  // At the bottom, or with the overflow interrupt off: the period that waits.
+  // The interrupt stays on for a callback alone.
+  void TakeWaitingPeriod() {
+    Traits::Top() = top_;
+    clock_select_ = waiting_clock_select_;
+    period_waits_ = false;
+    if (callback_ == nullptr) {
+      ClearBit(Traits::Timsk(), Traits::kOverflowInterruptBit);
+    }
+  }
+
+  // On again after AttachInterrupt() or DetachInterrupt() turned it off for
+  // the callback, a few clocks ago: an overflow flagged since is a bottom, not
+  // one that an earlier run left.
+  static void KeepOverflowInterruptForThePeriod() {
+    SetBit(Traits::Timsk(), Traits::kOverflowInterruptBit);
+  }
+
+  // A register of the counter's width, read or written so that the overflow
+  // interrupt does not come between its two bytes: the AVR passes the high
+  // byte of a 16-bit register through one TEMP register per timer, which the
+  // interrupt uses as well when it writes the top.
+  // A register of a byte is read and written in one access.
+  static constexpr bool kOneAccess{sizeof(Counter) == 1U};
+
+  template <typename Register>
+  static Counter Load(Register& reg) {
+    if (kOneAccess) {
+      return reg;
+    }
+    Counter value{0U};
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { value = reg; }
+    return value;
+  }
+
+  template <typename Register>
+  static void Store(Register& reg, Counter value) {
+    if (kOneAccess) {
+      reg = value;
+      return;
+    }
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { reg = value; }
   }
 
   // The duty of each channel at the top, from the one at Index on.
@@ -491,6 +588,12 @@ class Timer {
   Callback volatile callback_{nullptr};
   State state_{State::kNotBegun};
   ClockSelect clock_select_{ClockSelect::kNoClock};
+  // The top the duties are shares of: the one that waits, if one does.
+  Counter top_{0U};
+  // The period that waits for the bottom, which the overflow interrupt takes:
+  // top_ and waiting_clock_select_. Written with the interrupt off.
+  ClockSelect waiting_clock_select_{ClockSelect::kNoClock};
+  bool volatile period_waits_{false};
   // The duty SetPwmDuty() was given to each channel, which a new period
   // applies to its top.
   internal::array<uint16_t, Traits::kChannelCount> duties_{};
