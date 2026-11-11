@@ -1,16 +1,29 @@
 // Copyright 2026 Andreas Burnickl
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// How a sketch uses AtmegaTimer: a reading of a pin, limited to a range,
-// on Serial.
+// Toggles the LED every millisecond from the overflow interrupt, and gives a
+// PWM of half the period on pin 3, whose frequency follows the period.
 
 #include <AtmegaTimer.h>
+#include <stdint.h>
 
-void setup() { Serial.begin(115200); }
+namespace {
 
-void loop() {
-  // From a pin, so that the compiler cannot fold the call away.
-  int const reading{analogRead(A0)};
-  Serial.println(atmega_timer::Clamp(reading, 100, 900));
-  delay(1000);
+constexpr uint8_t kLedPin{LED_BUILTIN};
+
+void OnTick() {
+  digitalWrite(kLedPin, digitalRead(kLedPin) == LOW ? HIGH : LOW);
 }
+
+}  // namespace
+
+void setup() {
+  pinMode(kLedPin, OUTPUT);
+  // 1000 microseconds, and the callback. Nothing to do on a refusal here: the
+  // period is in range, and the timer is begun once.
+  atmega_timer::Discard(atmega_timer::timer2.Begin(1000, OnTick));
+  atmega_timer::Discard(atmega_timer::timer2.EnablePwm(128));
+  atmega_timer::Discard(atmega_timer::timer2.Start());
+}
+
+void loop() {}
