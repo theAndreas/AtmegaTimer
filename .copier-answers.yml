@@ -1,0 +1,19 @@
+# The answers this project was made from, which `copier update` reads. Change one with
+# `copier update --data name=value`, not here.
+_commit: v0.5.0
+_src_path: gh:theAndreas/embedded-cpp-template
+arduino_core: arduino:avr@1.8.8
+author: Andreas Burnickl
+copyright_year: 2026
+description: Periodic interrupt, PWM and time readout on Timer1 to Timer5 of the ATmega328P
+    and ATmega2560.
+fqbn: arduino:avr:uno
+github_owner: theAndreas
+license: GPL-3.0-or-later
+macro_prefix: ATMEGATIMER
+namespace: atmega_timer
+project_name: AtmegaTimer
+simavr_frequency: 16000000
+simavr_mcu: atmega328p
+skeleton: true
+url: https://github.com/theAndreas/AtmegaTimer

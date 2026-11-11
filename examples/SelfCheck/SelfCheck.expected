@@ -1,0 +1,4 @@
+pass Clamp limits a value above
+pass Clamp limits a value below
+pass Clamp keeps a value in range
+failed: 0

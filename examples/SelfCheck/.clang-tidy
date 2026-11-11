@@ -1,0 +1,8 @@
+---
+# SelfCheck is a test, the one on the target (docs/Testing.md), and keeps the
+# limits of a test:
+# readability-function-size.LineThreshold: a check of many cases is long but
+#   flat; its parameters, nesting and complexity keep the library's limits.
+InheritParentConfig: true
+CheckOptions:
+  readability-function-size.LineThreshold: none
