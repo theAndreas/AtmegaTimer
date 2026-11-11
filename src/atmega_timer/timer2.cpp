@@ -47,4 +47,4 @@ Timer2 timer2;
 
 }  // namespace atmega_timer
 
-ISR(TIMER2_OVF_vect) { atmega_timer::timer2.OnOverflow(); }
+ISR(TIMER2_OVF_vect) { atmega_timer::timer2.OnInterrupt(); }

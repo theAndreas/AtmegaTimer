@@ -4,7 +4,7 @@
 // timer1, Timer/Counter1 of the ATmega328P in phase and frequency correct PWM,
 // at the Uno's 16 MHz: what its traits give the core, its 16-bit counter, its
 // two channels and its interrupt. What every timer does alike, its states and
-// its errors, TimerTest shows on Timer2.
+// its errors, PhaseCorrectPwmTest shows on Timer2.
 
 #include "atmega_timer/timer1.h"
 
@@ -16,8 +16,9 @@
 #include <string>
 
 #include "Arduino.h"
+#include "atmega_timer/core.h"
+#include "atmega_timer/phase_correct_pwm.h"
 #include "atmega_timer/status.h"
-#include "atmega_timer/timer.h"
 #include "test/printers.h"  // IWYU pragma: keep
 
 namespace atmega_timer {
@@ -222,7 +223,7 @@ TEST_F(Timer1Test, TheBottomTakesTheNewPeriod) {
   ASSERT_EQ(timer().Start(), Error::kOk);
   ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
 
-  timer().OnOverflow();
+  timer().OnInterrupt();
 
   EXPECT_EQ(ICR1, 10000);
   EXPECT_EQ(ClockSelect(), 2);
@@ -235,7 +236,7 @@ TEST_F(Timer1Test, TheBottomKeepsTheInterruptOfACallback) {
   ASSERT_EQ(timer().Start(), Error::kOk);
   ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
 
-  timer().OnOverflow();
+  timer().OnInterrupt();
 
   EXPECT_EQ(ICR1, 10000);
   EXPECT_TRUE(BitIsSet(TIMSK1, TOIE1));
@@ -289,7 +290,7 @@ TEST_F(Timer1Test, DetachInterruptBeforeTheBottomKeepsItForThePeriod) {
   timer().DetachInterrupt();
 
   EXPECT_TRUE(BitIsSet(TIMSK1, TOIE1));
-  timer().OnOverflow();
+  timer().OnInterrupt();
   EXPECT_EQ(ICR1, 10000);
   EXPECT_FALSE(BitIsSet(TIMSK1, TOIE1));
   EXPECT_EQ(overflow_calls, 0);

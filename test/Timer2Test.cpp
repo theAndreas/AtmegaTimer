@@ -9,8 +9,8 @@
 #include <avr/interrupt.h>
 #include <gtest/gtest.h>
 
+#include "atmega_timer/core.h"
 #include "atmega_timer/status.h"
-#include "atmega_timer/timer.h"
 #include "test/printers.h"  // IWYU pragma: keep
 
 namespace atmega_timer {
