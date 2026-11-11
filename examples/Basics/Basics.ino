@@ -23,7 +23,8 @@ void setup() {
   // period is in range, and the timer is begun once.
   atmega_timer::Discard(atmega_timer::timer2.Begin(1000, OnTick));
   // Half of the period high: 512 of atmega_timer::kDutyMax, 1023.
-  atmega_timer::Discard(atmega_timer::timer2.EnablePwm(512));
+  atmega_timer::Discard(
+      atmega_timer::timer2.EnablePwm<atmega_timer::Channel::kB>(512));
   atmega_timer::Discard(atmega_timer::timer2.Start());
 }
 

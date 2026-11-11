@@ -36,11 +36,12 @@ void setup() {
   pinMode(kLedPin, OUTPUT);
   auto& timer = atmega_timer::timer2;
   Check(timer.Begin(atmega_timer::Timer2::kPeriodMax, OnTick), F("Begin"));
-  Check(timer.EnablePwm(511), F("EnablePwm"));
+  Check(timer.EnablePwm<atmega_timer::Channel::kB>(511), F("EnablePwm"));
   Check(timer.Start(), F("Start"));
 
   delay(20);
-  atmega_timer::Result<atmega_timer::TimeType> const elapsed{timer.Read()};
+  atmega_timer::Result<atmega_timer::Timer2::TimeType> const elapsed{
+      timer.Read()};
   Check(elapsed.GetError(), F("Read"));
   Serial.print(F("Since the bottom: "));
   Serial.print(elapsed.GetValue());

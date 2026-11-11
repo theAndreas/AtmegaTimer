@@ -3,21 +3,26 @@
 //
 // Timer at whatever clock F_CPU is: CMakeLists.txt builds these tests at 1,
 // 16 and 20 MHz. Each expectation is computed from F_CPU in 64 bits, apart
-// from how Timer computes it.
+// from how Timer computes it; on Timer2, with a counter of 8 bits, and on
+// Timer1, with one of 16.
 
 #include <avr/io.h>
 #include <gtest/gtest.h>
 #include <stdint.h>
 
 #include <array>
+#include <string>
 
 #include "atmega_timer/status.h"
 #include "atmega_timer/timer.h"
+#include "atmega_timer/timer1.h"
 #include "atmega_timer/timer2.h"
 #include "test/printers.h"  // IWYU pragma: keep
 
 namespace atmega_timer {
 namespace {
+
+using TimeType = Timer2::TimeType;
 
 constexpr uint64_t kClock{F_CPU};
 constexpr uint64_t kMicrosecondsPerSecond{1000000};
@@ -106,6 +111,103 @@ TEST_F(ClockTest, ReadIsTheTimeOfTheStepsCounted) {
   EXPECT_EQ(result.GetValue(),
             50 * Prescaler() * kMicrosecondsPerSecond / kClock);
 }
+
+// Mode 8 counts up to the top and down again, 2 * 65536 steps at the most, of
+// the largest prescaler.
+constexpr uint64_t kLongestPeriodOfTimer1InClocks{uint64_t{2} * 65536 * 1024};
+
+// The prescaler TCCR1B selects, 0 while the timer does not run.
+uint64_t PrescalerOfTimer1() {
+  constexpr std::array<uint64_t, 6> kPrescalers{0, 1, 8, 64, 256, 1024};
+  return kPrescalers.at(TCCR1B & 0x07U);
+}
+
+// The period ICR1 and TCCR1B make, in clocks.
+uint64_t PeriodOfTimer1InClocks() {
+  return uint64_t{2} * ICR1 * PrescalerOfTimer1();
+}
+
+class Timer1ClockTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    TCCR1A = 0;
+    TCCR1B = 0;
+    ICR1 = 0;
+    TCNT1.Set(0, true);
+  }
+
+  Timer1& timer() { return timer_; }
+
+ private:
+  Timer1 timer_;
+};
+
+TEST_F(Timer1ClockTest, TheLongestPeriodIsTheLastThatFits) {
+  uint64_t const longest{
+      ((kLongestPeriodOfTimer1InClocks * kMicrosecondsPerSecond) - 1) / kClock};
+
+  EXPECT_EQ(Timer1::kPeriodMax, longest);
+}
+
+TEST_F(Timer1ClockTest, TheLongestPeriodIsTakenAndOneMoreRefused) {
+  ASSERT_EQ(timer().Begin(Timer1::kPeriodMax), Error::kOk);
+  ASSERT_EQ(timer().Start(), Error::kOk);
+  EXPECT_EQ(PrescalerOfTimer1(), 1024U);
+
+  EXPECT_EQ(timer().SetPeriod(Timer1::kPeriodMax + 1U),
+            Error::kPeriodOutOfRange);
+}
+
+// The steps up from the top and back down beyond 16 bits, of the prescaler of
+// a period of 4 s.
+TEST_F(Timer1ClockTest, ReadIsTheTimeOfTheStepsCounted) {
+  ASSERT_EQ(timer().Begin(4000000U), Error::kOk);
+  ASSERT_EQ(timer().Start(), Error::kOk);
+  TCNT1.Set(10, false);
+
+  Result<Timer1::TimeType> const result{timer().Read()};
+
+  ASSERT_TRUE(result.IsOk());
+  uint64_t const steps{(uint64_t{2} * ICR1) - 10};
+  EXPECT_EQ(result.GetValue(),
+            steps * PrescalerOfTimer1() * kMicrosecondsPerSecond / kClock);
+}
+
+class Timer1PeriodAtClockTest : public ::testing::TestWithParam<uint32_t> {
+ protected:
+  void SetUp() override {
+    TCCR1A = 0;
+    TCCR1B = 0;
+    ICR1 = 0;
+    TCNT1.Set(0, true);
+  }
+
+  Timer1& timer() { return timer_; }
+
+ private:
+  Timer1 timer_;
+};
+
+// Each period is met to less than a step of the counter up and one down, and
+// the two clocks that dividing by 2 and by the prescaler may cut.
+TEST_P(Timer1PeriodAtClockTest, IsMetWithinAStep) {
+  ASSERT_EQ(timer().Begin(GetParam()), Error::kOk);
+
+  // The prescaler is in TCCR1B while the timer runs.
+  ASSERT_EQ(timer().Start(), Error::kOk);
+
+  uint64_t const wanted{GetParam() * kClock / kMicrosecondsPerSecond};
+  EXPECT_LE(PeriodOfTimer1InClocks(), wanted);
+  EXPECT_LT(wanted - PeriodOfTimer1InClocks(), (2 * PrescalerOfTimer1()) + 2);
+}
+
+// From two clocks at 1 MHz to the longest period at 20 MHz, about 6.7 s.
+INSTANTIATE_TEST_SUITE_P(FromTwoClocksToSeconds, Timer1PeriodAtClockTest,
+                         ::testing::Values(2U, 3U, 10U, 1000U, 100000U,
+                                           1000000U, 4194303U, 6710886U),
+                         [](::testing::TestParamInfo<uint32_t> const& period) {
+                           return std::to_string(period.param) + "us";
+                         });
 
 }  // namespace
 }  // namespace atmega_timer

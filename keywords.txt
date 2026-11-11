@@ -7,13 +7,16 @@
 #######################################
 
 atmega_timer	KEYWORD1
+timer1	KEYWORD1
 timer2	KEYWORD1
+Timer1	KEYWORD1
 Timer2	KEYWORD1
 Timer	KEYWORD1
 Status	KEYWORD1
 Result	KEYWORD1
 Error	KEYWORD1
 State	KEYWORD1
+Channel	KEYWORD1
 TimeType	KEYWORD1
 
 #######################################

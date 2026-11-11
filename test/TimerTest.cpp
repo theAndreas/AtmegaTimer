@@ -21,12 +21,18 @@
 namespace atmega_timer {
 namespace {
 
+using TimeType = Timer2::TimeType;
+
+// The compare register of channel A of OtherTraits, which Timer2 lacks.
+uint8_t volatile other_compare_a{0};
+
 // Traits on the registers of Timer2 whose every other value differs from
 // Timer2Traits, so that a test shows where Timer takes it from: other mode
-// bits, the prescalers 1, 8, 64 and 256, pin 9 and COM2B0, and the interrupt
-// and its flag at bits 1 and 2.
+// bits, the prescalers 1, 8, 64 and 256, two channels, A on pin 10 and COM2A1
+// and B on pin 9 and COM2B0, and the interrupt and its flag at bits 1 and 2.
 struct OtherTraits {
-  using TimeType = atmega_timer::TimeType;
+  using Counter = uint8_t;
+  using TimeType = Timer2Traits::TimeType;
 
   enum class ClockSelect : uint8_t {
     kNoClock = 0,
@@ -56,21 +62,35 @@ struct OtherTraits {
   // WGM21 alone.
   static constexpr uint8_t kModeTccra{0x02U};
   static constexpr uint8_t kModeTccrb{0U};
+  static constexpr bool kTopIsBuffered{true};
   static constexpr uint8_t kOverflowInterruptBit{1U};
   static constexpr uint8_t kOverflowFlagBit{2U};
 
-  struct PwmChannel {
-    static constexpr uint8_t kPin{9};
-    static constexpr uint8_t kCompareOutputBit{COM2B0};
-    static uint8_t volatile& Compare() { return OCR2B; }
-  };
+  static constexpr Channel kFirstChannel{Channel::kA};
+  static constexpr uint8_t kChannelCount{2U};
+  template <Channel Output>
+  struct PwmChannel;
 
   static uint8_t volatile& Tccra() { return TCCR2A; }
   static uint8_t volatile& Tccrb() { return TCCR2B; }
   static uint8_t volatile& Top() { return OCR2A; }
   static uint8_t volatile& Timsk() { return TIMSK2; }
   static uint8_t volatile& Tifr() { return TIFR2; }
-  static MockCounter& Tcnt() { return TCNT2; }
+  static MockCounter<uint8_t>& Tcnt() { return TCNT2; }
+};
+
+template <>
+struct OtherTraits::PwmChannel<Channel::kA> {
+  static constexpr uint8_t kPin{10};
+  static constexpr uint8_t kCompareOutputBit{COM2A1};
+  static uint8_t volatile& Compare() { return other_compare_a; }
+};
+
+template <>
+struct OtherTraits::PwmChannel<Channel::kB> {
+  static constexpr uint8_t kPin{9};
+  static constexpr uint8_t kCompareOutputBit{COM2B0};
+  static uint8_t volatile& Compare() { return OCR2B; }
 };
 
 // The bits of TCCR2B that select the clock, and their values.
@@ -105,6 +125,7 @@ class TimerTest : public ::testing::Test {
     TIMSK2 = 0;
     TIFR2 = 0;
     TCNT2.Set(0, true);
+    other_compare_a = 0;
     mock_pin_mode.fill(INPUT);
     overflow_calls = 0;
   }
@@ -208,7 +229,7 @@ TEST_F(TimerTest, SetPeriodRefusesAPeriodOfZero) {
 
 TEST_F(TimerTest, SetPeriodKeepsTheShareOfTheDuty) {
   ASSERT_EQ(timer().Begin(1000U), Error::kOk);
-  ASSERT_EQ(timer().EnablePwm(kDutyMax), Error::kOk);
+  ASSERT_EQ(timer().EnablePwm<Channel::kB>(kDutyMax), Error::kOk);
 
   ASSERT_EQ(timer().SetPeriod(100U), Error::kOk);
 
@@ -350,7 +371,7 @@ TEST_F(TimerTest, ResumeIsRefusedUnlessStopped) {
 TEST_F(TimerTest, EnablePwmDrivesPin3WithTheDutyOfTheTop) {
   ASSERT_EQ(timer().Begin(1000U), Error::kOk);
 
-  EXPECT_EQ(timer().EnablePwm(512), Error::kOk);
+  EXPECT_EQ(timer().EnablePwm<Channel::kB>(512), Error::kOk);
 
   EXPECT_EQ(mock_pin_mode[3], OUTPUT);
   EXPECT_TRUE(BitIsSet(TCCR2A, COM2B1));
@@ -360,7 +381,7 @@ TEST_F(TimerTest, EnablePwmDrivesPin3WithTheDutyOfTheTop) {
 }
 
 TEST_F(TimerTest, EnablePwmIsRefusedBeforeBegin) {
-  EXPECT_EQ(timer().EnablePwm(512), Error::kNotBegun);
+  EXPECT_EQ(timer().EnablePwm<Channel::kB>(512), Error::kNotBegun);
 
   EXPECT_FALSE(BitIsSet(TCCR2A, COM2B1));
   EXPECT_EQ(mock_pin_mode[3], INPUT);
@@ -370,17 +391,17 @@ TEST_F(TimerTest, AFullDutyIsTheTopAndNoDutyTheBottom) {
   ASSERT_EQ(timer().Begin(1000U), Error::kOk);
 
   // OCR2B at the top keeps the output high all the time, at the bottom low.
-  ASSERT_EQ(timer().EnablePwm(kDutyMax), Error::kOk);
+  ASSERT_EQ(timer().EnablePwm<Channel::kB>(kDutyMax), Error::kOk);
   EXPECT_EQ(OCR2B, OCR2A);
-  ASSERT_EQ(timer().SetPwmDuty(0), Error::kOk);
+  ASSERT_EQ(timer().SetPwmDuty<Channel::kB>(0), Error::kOk);
   EXPECT_EQ(OCR2B, 0);
 }
 
 TEST_F(TimerTest, SetPwmDutySetsTheCompareValue) {
   ASSERT_EQ(timer().Begin(1000U), Error::kOk);
-  ASSERT_EQ(timer().EnablePwm(512), Error::kOk);
+  ASSERT_EQ(timer().EnablePwm<Channel::kB>(512), Error::kOk);
 
-  EXPECT_EQ(timer().SetPwmDuty(256), Error::kOk);
+  EXPECT_EQ(timer().SetPwmDuty<Channel::kB>(256), Error::kOk);
 
   // 256 / 1023 of the top, 250, rounded.
   EXPECT_EQ(OCR2B, 63);
@@ -390,7 +411,7 @@ TEST_F(TimerTest, TheCompareValueIsComputedIn32Bits) {
   ASSERT_EQ(timer().Begin(Timer2::kPeriodMax), Error::kOk);
   ASSERT_EQ(OCR2A, 255);
 
-  ASSERT_EQ(timer().EnablePwm(600), Error::kOk);
+  ASSERT_EQ(timer().EnablePwm<Channel::kB>(600), Error::kOk);
 
   // 255 * 600 does not fit 16 bits, which would give 21.
   EXPECT_EQ(OCR2B, 150);
@@ -398,9 +419,10 @@ TEST_F(TimerTest, TheCompareValueIsComputedIn32Bits) {
 
 TEST_F(TimerTest, ADutyAboveTheMaxIsRefused) {
   ASSERT_EQ(timer().Begin(1000U), Error::kOk);
-  ASSERT_EQ(timer().EnablePwm(512), Error::kOk);
+  ASSERT_EQ(timer().EnablePwm<Channel::kB>(512), Error::kOk);
 
-  EXPECT_EQ(timer().SetPwmDuty(kDutyMax + 1U), Error::kDutyOutOfRange);
+  EXPECT_EQ(timer().SetPwmDuty<Channel::kB>(kDutyMax + 1U),
+            Error::kDutyOutOfRange);
 
   EXPECT_EQ(OCR2B, 125);
 }
@@ -408,7 +430,8 @@ TEST_F(TimerTest, ADutyAboveTheMaxIsRefused) {
 TEST_F(TimerTest, EnablePwmWithADutyAboveTheMaxChangesNothing) {
   ASSERT_EQ(timer().Begin(1000U), Error::kOk);
 
-  EXPECT_EQ(timer().EnablePwm(kDutyMax + 1U), Error::kDutyOutOfRange);
+  EXPECT_EQ(timer().EnablePwm<Channel::kB>(kDutyMax + 1U),
+            Error::kDutyOutOfRange);
 
   EXPECT_FALSE(BitIsSet(TCCR2A, COM2B1));
   EXPECT_EQ(mock_pin_mode[3], INPUT);
@@ -417,16 +440,16 @@ TEST_F(TimerTest, EnablePwmWithADutyAboveTheMaxChangesNothing) {
 TEST_F(TimerTest, SetPwmDutyIsRefusedBeforeBegin) {
   OCR2B = 7;
 
-  EXPECT_EQ(timer().SetPwmDuty(256), Error::kNotBegun);
+  EXPECT_EQ(timer().SetPwmDuty<Channel::kB>(256), Error::kNotBegun);
 
   EXPECT_EQ(OCR2B, 7);
 }
 
 TEST_F(TimerTest, DisablePwmDisconnectsPin3) {
   ASSERT_EQ(timer().Begin(1000U), Error::kOk);
-  ASSERT_EQ(timer().EnablePwm(512), Error::kOk);
+  ASSERT_EQ(timer().EnablePwm<Channel::kB>(512), Error::kOk);
 
-  timer().DisablePwm();
+  timer().DisablePwm<Channel::kB>();
 
   EXPECT_FALSE(BitIsSet(TCCR2A, COM2B1));
 }
@@ -585,7 +608,7 @@ TEST_F(TimerTest, TheLongestPeriodIsThatOfTheLargestPrescalerOfTheTraits) {
 TEST_F(TimerTest, EnablePwmDrivesThePinAndTheBitOfTheTraits) {
   ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
 
-  EXPECT_EQ(other_timer().EnablePwm(512), Error::kOk);
+  EXPECT_EQ(other_timer().EnablePwm<Channel::kB>(512), Error::kOk);
 
   EXPECT_EQ(mock_pin_mode[9], OUTPUT);
   EXPECT_EQ(mock_pin_mode[3], INPUT);
@@ -595,11 +618,59 @@ TEST_F(TimerTest, EnablePwmDrivesThePinAndTheBitOfTheTraits) {
   EXPECT_EQ(OCR2B, 63);
 }
 
+TEST_F(TimerTest, EnablePwmOfChannelADrivesItsOwnPinAndBit) {
+  ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
+
+  EXPECT_EQ(other_timer().EnablePwm<Channel::kA>(512), Error::kOk);
+
+  EXPECT_EQ(mock_pin_mode[10], OUTPUT);
+  EXPECT_EQ(mock_pin_mode[9], INPUT);
+  EXPECT_TRUE(BitIsSet(TCCR2A, COM2A1));
+  EXPECT_FALSE(BitIsSet(TCCR2A, COM2B0));
+  // 512 / 1023 of the top, 125, rounded.
+  EXPECT_EQ(other_compare_a, 63);
+}
+
+TEST_F(TimerTest, EachChannelKeepsADutyOfItsOwn) {
+  ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
+
+  ASSERT_EQ(other_timer().EnablePwm<Channel::kA>(512), Error::kOk);
+  ASSERT_EQ(other_timer().EnablePwm<Channel::kB>(256), Error::kOk);
+
+  // 512 and 256 / 1023 of the top, 125, rounded.
+  EXPECT_EQ(other_compare_a, 63);
+  EXPECT_EQ(OCR2B, 31);
+}
+
+TEST_F(TimerTest, SetPeriodKeepsTheShareOfTheDutyOfEachChannel) {
+  ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(other_timer().EnablePwm<Channel::kA>(512), Error::kOk);
+  ASSERT_EQ(other_timer().EnablePwm<Channel::kB>(256), Error::kOk);
+
+  ASSERT_EQ(other_timer().SetPeriod(2000U), Error::kOk);
+
+  // 512 and 256 / 1023 of the new top, 250, rounded.
+  ASSERT_EQ(OCR2A, 250);
+  EXPECT_EQ(other_compare_a, 125);
+  EXPECT_EQ(OCR2B, 63);
+}
+
+TEST_F(TimerTest, DisablePwmLeavesTheOtherChannel) {
+  ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(other_timer().EnablePwm<Channel::kA>(512), Error::kOk);
+  ASSERT_EQ(other_timer().EnablePwm<Channel::kB>(256), Error::kOk);
+
+  other_timer().DisablePwm<Channel::kA>();
+
+  EXPECT_FALSE(BitIsSet(TCCR2A, COM2A1));
+  EXPECT_TRUE(BitIsSet(TCCR2A, COM2B0));
+}
+
 TEST_F(TimerTest, DisablePwmClearsTheBitOfTheTraits) {
   ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
-  ASSERT_EQ(other_timer().EnablePwm(512), Error::kOk);
+  ASSERT_EQ(other_timer().EnablePwm<Channel::kB>(512), Error::kOk);
 
-  other_timer().DisablePwm();
+  other_timer().DisablePwm<Channel::kB>();
 
   EXPECT_FALSE(BitIsSet(TCCR2A, COM2B0));
 }

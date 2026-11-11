@@ -27,8 +27,18 @@ namespace atmega_timer {
  * compiler writes it where the datasheet says.
  */
 struct Timer2Traits {
-  /*! \brief A time in microseconds, long enough for Timer2::kPeriodMax. */
-  using TimeType = atmega_timer::TimeType;
+  /*! \brief The type of the counter and its registers: 8 bits. */
+  using Counter = uint8_t;
+
+  /*!
+   * \brief A time in microseconds: 32 bits below 8 MHz, where the longest
+   *        period does not fit into 16.
+   */
+#if F_CPU < 8000000UL
+  using TimeType = uint32_t;
+#else
+  using TimeType = uint16_t;
+#endif
 
   /*! \brief The values of the clock select bits CS22..CS20. */
   enum class ClockSelect : uint8_t {
@@ -58,20 +68,25 @@ struct Timer2Traits {
   static constexpr uint8_t kModeTccra{1U << WGM20};
   /*! \brief TCCR2B in mode 5: WGM22, and no clock. */
   static constexpr uint8_t kModeTccrb{1U << WGM22};
+  /*! \brief Whether the hardware buffers the top: OCR2A is, and taken at the
+   * top in mode 5. */
+  static constexpr bool kTopIsBuffered{true};
   /*! \brief The bit of TIMSK2 that enables the overflow interrupt. */
   static constexpr uint8_t kOverflowInterruptBit{TOIE2};
   /*! \brief The bit of TIFR2 that flags an overflow. */
   static constexpr uint8_t kOverflowFlagBit{TOV2};
 
-  /*! \brief OC2B, the channel that gives the PWM. */
-  struct PwmChannel {
-    /*! \brief The Arduino pin of OC2B, PD3. */
-    static constexpr uint8_t kPin{3};
-    /*! \brief The bit of TCCR2A that connects OC2B: COM2B1, non-inverting. */
-    static constexpr uint8_t kCompareOutputBit{COM2B1};
-    /*! \brief OCR2B, the compare value of the PWM. */
-    static auto Compare() -> decltype((OCR2B)) { return OCR2B; }
-  };
+  /*! \brief The first channel that gives a PWM: B, as OCR2A is the top. */
+  static constexpr Channel kFirstChannel{Channel::kB};
+  /*! \brief The number of channels that give a PWM: B alone. */
+  static constexpr uint8_t kChannelCount{1U};
+
+  /*!
+   * \brief A channel that gives a PWM.
+   * \tparam Output the channel, Channel::kB alone
+   */
+  template <Channel Output>
+  struct PwmChannel;
 
   /*! \brief TCCR2A. */
   static auto Tccra() -> decltype((TCCR2A)) { return TCCR2A; }
@@ -85,6 +100,17 @@ struct Timer2Traits {
   static auto Tifr() -> decltype((TIFR2)) { return TIFR2; }
   /*! \brief TCNT2, the counter. */
   static auto Tcnt() -> decltype((TCNT2)) { return TCNT2; }
+};
+
+/*! \brief OC2B, the channel of Timer2 that gives the PWM. */
+template <>
+struct Timer2Traits::PwmChannel<Channel::kB> {
+  /*! \brief The Arduino pin of OC2B, PD3. */
+  static constexpr uint8_t kPin{3};
+  /*! \brief The bit of TCCR2A that connects OC2B: COM2B1, non-inverting. */
+  static constexpr uint8_t kCompareOutputBit{COM2B1};
+  /*! \brief OCR2B, the compare value of the PWM. */
+  static auto Compare() -> decltype((OCR2B)) { return OCR2B; }
 };
 
 /*! \brief The type of timer2, for its constants: `Timer2::kPeriodMax`. */
