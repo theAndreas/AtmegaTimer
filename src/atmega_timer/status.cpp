@@ -20,18 +20,26 @@ char const kTextNotRunning[] PROGMEM = "not running";
 char const kTextNotStopped[] PROGMEM = "not stopped";
 char const kTextPeriodOutOfRange[] PROGMEM = "period out of range";
 char const kTextNoCallback[] PROGMEM = "no callback";
+char const kTextDutyOutOfRange[] PROGMEM = "duty out of range";
 char const kTextUnknownError[] PROGMEM = "unknown error";
 
 // In the order of Error. An array, as PROGMEM takes one.
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)
 char const* const kTexts[] PROGMEM = {
-    kTextOk,         kTextNotBegun,   kTextBegunAlready,     kTextRunning,
-    kTextNotRunning, kTextNotStopped, kTextPeriodOutOfRange, kTextNoCallback,
+    kTextOk,
+    kTextNotBegun,
+    kTextBegunAlready,
+    kTextRunning,
+    kTextNotRunning,
+    kTextNotStopped,
+    kTextPeriodOutOfRange,
+    kTextNoCallback,
+    kTextDutyOutOfRange,
 };
 
 constexpr uint8_t kTextCount{sizeof(kTexts) / sizeof(kTexts[0])};
 
-static_assert(kTextCount == static_cast<uint8_t>(Error::kNoCallback) + 1,
+static_assert(kTextCount == static_cast<uint8_t>(Error::kDutyOutOfRange) + 1,
               "every error has a text");
 
 }  // namespace

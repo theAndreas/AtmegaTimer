@@ -22,7 +22,8 @@ void setup() {
   // 1000 microseconds, and the callback. Nothing to do on a refusal here: the
   // period is in range, and the timer is begun once.
   atmega_timer::Discard(atmega_timer::timer2.Begin(1000, OnTick));
-  atmega_timer::Discard(atmega_timer::timer2.EnablePwm(128));
+  // Half of the period high: 512 of atmega_timer::kDutyMax, 1023.
+  atmega_timer::Discard(atmega_timer::timer2.EnablePwm(512));
   atmega_timer::Discard(atmega_timer::timer2.Start());
 }
 

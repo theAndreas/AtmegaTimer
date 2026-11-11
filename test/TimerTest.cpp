@@ -154,7 +154,7 @@ TEST_F(TimerTest, SetPeriodRefusesAPeriodOfZero) {
 
 TEST_F(TimerTest, SetPeriodKeepsTheShareOfTheDuty) {
   ASSERT_EQ(timer().Begin(1000U), Error::kOk);
-  ASSERT_EQ(timer().EnablePwm(255), Error::kOk);
+  ASSERT_EQ(timer().EnablePwm(kDutyMax), Error::kOk);
 
   ASSERT_EQ(timer().SetPeriod(100U), Error::kOk);
 
@@ -296,17 +296,17 @@ TEST_F(TimerTest, ResumeIsRefusedUnlessStopped) {
 TEST_F(TimerTest, EnablePwmDrivesPin3WithTheDutyOfTheTop) {
   ASSERT_EQ(timer().Begin(1000U), Error::kOk);
 
-  EXPECT_EQ(timer().EnablePwm(128), Error::kOk);
+  EXPECT_EQ(timer().EnablePwm(512), Error::kOk);
 
   EXPECT_EQ(mock_pin_mode[3], OUTPUT);
   EXPECT_TRUE(BitIsSet(TCCR2A, COM2B1));
   EXPECT_FALSE(BitIsSet(TCCR2A, COM2B0));
-  // 128 / 255 of the top, 250, rounded.
+  // 512 / 1023 of the top, 250, rounded.
   EXPECT_EQ(OCR2B, 125);
 }
 
 TEST_F(TimerTest, EnablePwmIsRefusedBeforeBegin) {
-  EXPECT_EQ(timer().EnablePwm(128), Error::kNotBegun);
+  EXPECT_EQ(timer().EnablePwm(512), Error::kNotBegun);
 
   EXPECT_FALSE(BitIsSet(TCCR2A, COM2B1));
   EXPECT_EQ(mock_pin_mode[3], INPUT);
@@ -316,7 +316,7 @@ TEST_F(TimerTest, AFullDutyIsTheTopAndNoDutyTheBottom) {
   ASSERT_EQ(timer().Begin(1000U), Error::kOk);
 
   // OCR2B at the top keeps the output high all the time, at the bottom low.
-  ASSERT_EQ(timer().EnablePwm(255), Error::kOk);
+  ASSERT_EQ(timer().EnablePwm(kDutyMax), Error::kOk);
   EXPECT_EQ(OCR2B, OCR2A);
   ASSERT_EQ(timer().SetPwmDuty(0), Error::kOk);
   EXPECT_EQ(OCR2B, 0);
@@ -324,25 +324,53 @@ TEST_F(TimerTest, AFullDutyIsTheTopAndNoDutyTheBottom) {
 
 TEST_F(TimerTest, SetPwmDutySetsTheCompareValue) {
   ASSERT_EQ(timer().Begin(1000U), Error::kOk);
-  ASSERT_EQ(timer().EnablePwm(128), Error::kOk);
+  ASSERT_EQ(timer().EnablePwm(512), Error::kOk);
 
-  EXPECT_EQ(timer().SetPwmDuty(64), Error::kOk);
+  EXPECT_EQ(timer().SetPwmDuty(256), Error::kOk);
 
-  // 64 / 255 of the top, 250, rounded.
+  // 256 / 1023 of the top, 250, rounded.
   EXPECT_EQ(OCR2B, 63);
+}
+
+TEST_F(TimerTest, TheCompareValueIsComputedIn32Bits) {
+  ASSERT_EQ(timer().Begin(Timer2::kPeriodMax), Error::kOk);
+  ASSERT_EQ(OCR2A, 255);
+
+  ASSERT_EQ(timer().EnablePwm(600), Error::kOk);
+
+  // 255 * 600 does not fit 16 bits, which would give 21.
+  EXPECT_EQ(OCR2B, 150);
+}
+
+TEST_F(TimerTest, ADutyAboveTheMaxIsRefused) {
+  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().EnablePwm(512), Error::kOk);
+
+  EXPECT_EQ(timer().SetPwmDuty(kDutyMax + 1U), Error::kDutyOutOfRange);
+
+  EXPECT_EQ(OCR2B, 125);
+}
+
+TEST_F(TimerTest, EnablePwmWithADutyAboveTheMaxChangesNothing) {
+  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+
+  EXPECT_EQ(timer().EnablePwm(kDutyMax + 1U), Error::kDutyOutOfRange);
+
+  EXPECT_FALSE(BitIsSet(TCCR2A, COM2B1));
+  EXPECT_EQ(mock_pin_mode[3], INPUT);
 }
 
 TEST_F(TimerTest, SetPwmDutyIsRefusedBeforeBegin) {
   OCR2B = 7;
 
-  EXPECT_EQ(timer().SetPwmDuty(64), Error::kNotBegun);
+  EXPECT_EQ(timer().SetPwmDuty(256), Error::kNotBegun);
 
   EXPECT_EQ(OCR2B, 7);
 }
 
 TEST_F(TimerTest, DisablePwmDisconnectsPin3) {
   ASSERT_EQ(timer().Begin(1000U), Error::kOk);
-  ASSERT_EQ(timer().EnablePwm(128), Error::kOk);
+  ASSERT_EQ(timer().EnablePwm(512), Error::kOk);
 
   timer().DisablePwm();
 

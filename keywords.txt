@@ -44,3 +44,4 @@ Discard	KEYWORD2
 
 kPeriodMax	LITERAL1
 kDefaultPeriod	LITERAL1
+kDutyMax	LITERAL1

@@ -36,7 +36,7 @@ void setup() {
   pinMode(kLedPin, OUTPUT);
   auto& timer = atmega_timer::timer2;
   Check(timer.Begin(atmega_timer::Timer2::kPeriodMax, OnTick), F("Begin"));
-  Check(timer.EnablePwm(127), F("EnablePwm"));
+  Check(timer.EnablePwm(511), F("EnablePwm"));
   Check(timer.Start(), F("Start"));
 
   delay(20);

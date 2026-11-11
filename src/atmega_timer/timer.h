@@ -35,6 +35,13 @@ using TimeType = uint32_t;
 using TimeType = uint16_t;
 #endif
 
+/*!
+ * \brief The largest duty of a PWM, which keeps the output high; 0 keeps it
+ *        low. The same on every timer, so that a sketch moves to another one
+ *        without changing its duties.
+ */
+constexpr uint16_t kDutyMax{1023U};
+
 /*! \brief The function the overflow interrupt calls. */
 using Callback = void (*)();
 
@@ -66,9 +73,8 @@ constexpr uint8_t kClockSelectMask{0x07U};
 constexpr uint32_t kCounterValues{256U};
 constexpr uint32_t kClocksPerMillisecond{F_CPU / 1000UL};
 constexpr uint32_t kMicrosecondsPerMillisecond{1000U};
-// The duty is a share of 255 of the top, rounded.
-constexpr uint16_t kDutyMax{255U};
-constexpr uint16_t kDutyRounding{kDutyMax / 2U};
+// The duty is a share of kDutyMax of the top, rounded.
+constexpr uint32_t kDutyRounding{kDutyMax / 2U};
 
 // The prescalers as shifts: 1, 8, 32, 64, 128, 256 and 1024.
 constexpr uint8_t kShiftDivide8{3U};
@@ -289,12 +295,15 @@ class Timer {
    *
    * It breaks analogWrite() on that pin.
    *
-   * \param duty the duty, 0 for always low to 255 for always high
-   * \return Error::kNotBegun
+   * \param duty the duty, 0 for always low to kDutyMax for always high
+   * \return Error::kNotBegun, or Error::kDutyOutOfRange
    */
-  ATMEGATIMER_NODISCARD Status EnablePwm(uint8_t duty) {
+  ATMEGATIMER_NODISCARD Status EnablePwm(uint16_t duty) {
     if (state_ == State::kNotBegun) {
       return Error::kNotBegun;
+    }
+    if (duty > kDutyMax) {
+      return Error::kDutyOutOfRange;
     }
     pinMode(Registers::kPwmPin, OUTPUT);
     SetBit(Registers::Tccra(), COM2B1);
@@ -303,12 +312,15 @@ class Timer {
 
   /*!
    * \brief Sets the duty of the PWM, which EnablePwm() started or is to start.
-   * \param duty the duty, 0 for always low to 255 for always high
-   * \return Error::kNotBegun
+   * \param duty the duty, 0 for always low to kDutyMax for always high
+   * \return Error::kNotBegun, or Error::kDutyOutOfRange
    */
-  ATMEGATIMER_NODISCARD Status SetPwmDuty(uint8_t duty) {
+  ATMEGATIMER_NODISCARD Status SetPwmDuty(uint16_t duty) {
     if (state_ == State::kNotBegun) {
       return Error::kNotBegun;
+    }
+    if (duty > kDutyMax) {
+      return Error::kDutyOutOfRange;
     }
     duty_ = duty;
     Registers::Ocrb() = CompareValue();
@@ -372,16 +384,11 @@ class Timer {
 
  private:
   // The compare value of duty_ at the top, rounded: 0 is the bottom, which
-  // keeps the output low, and 255 the top, which keeps it high. In 16 bits
-  // unsigned: 255 * 255 does not fit the AVR's int.
+  // keeps the output low, and kDutyMax the top, which keeps it high. In 32
+  // bits: 255 * 1023 does not fit 16.
   uint8_t CompareValue() const {
-    // The outer cast is redundant on the AVR, where the product is unsigned
-    // int, but not on the host, where it is int.
-    // NOLINTNEXTLINE(readability-redundant-casting)
-    uint16_t const product{static_cast<uint16_t>(
-        static_cast<uint16_t>(Registers::Ocra()) * duty_)};
-    return static_cast<uint8_t>((product + internal::kDutyRounding) /
-                                internal::kDutyMax);
+    uint32_t const product{static_cast<uint32_t>(Registers::Ocra()) * duty_};
+    return static_cast<uint8_t>((product + internal::kDutyRounding) / kDutyMax);
   }
 
   void ApplyPeriod(uint8_t top, internal::ClockSelect clock_select) {
@@ -426,7 +433,7 @@ class Timer {
   State state_{State::kNotBegun};
   internal::ClockSelect clock_select_{internal::ClockSelect::kNoClock};
   // The duty SetPwmDuty() was given, which a new period applies to its top.
-  uint8_t duty_{0};
+  uint16_t duty_{0};
 };
 
 /*! \cond */

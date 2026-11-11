@@ -29,7 +29,8 @@ enum class Error : uint8_t {
   kNotRunning,       /*!< The timer does not run. */
   kNotStopped,       /*!< The timer was not stopped by Stop(). */
   kPeriodOutOfRange, /*!< The period is not in range, see SetPeriod(). */
-  kNoCallback        /*!< The callback is nullptr. */
+  kNoCallback,       /*!< The callback is nullptr. */
+  kDutyOutOfRange    /*!< The duty is above kDutyMax. */
 };
 
 /*!

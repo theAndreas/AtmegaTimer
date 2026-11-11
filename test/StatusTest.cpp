@@ -43,6 +43,7 @@ TEST(StatusTest, HasATextForEachError) {
   EXPECT_EQ(std::string{TextOf(Error::kPeriodOutOfRange)},
             "period out of range");
   EXPECT_EQ(std::string{TextOf(Error::kNoCallback)}, "no callback");
+  EXPECT_EQ(std::string{TextOf(Error::kDutyOutOfRange)}, "duty out of range");
 }
 
 TEST(StatusTest, HasATextForAByteThatIsNoError) {
