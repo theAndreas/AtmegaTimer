@@ -20,6 +20,7 @@
 #include <avr/io.h>
 #include <stdint.h>
 
+#include "atmega_timer/Utility/array.h"
 #include "atmega_timer/attributes.h"
 #include "atmega_timer/status.h"
 
@@ -31,6 +32,15 @@ namespace atmega_timer {
  *        without changing its duties.
  */
 constexpr uint16_t kDutyMax{1023U};
+
+/*!
+ * \brief A channel of a timer: its compare output, which gives a PWM on a pin
+ *        of its own.
+ */
+enum class Channel : uint8_t {
+  kA, /*!< OCxA. */
+  kB  /*!< OCxB, after OCxA: the traits count the channels in this order. */
+};
 
 /*! \brief The function the overflow interrupt calls. */
 using Callback = void (*)();
@@ -73,10 +83,12 @@ constexpr uint32_t kDutyRounding{kDutyMax / 2U};
  *                at 1, the others in the values after it up to
  *                `kClockSelectLargest`, with `kShiftLargest` and `ShiftOf()`;
  *                `kModeTccra` and `kModeTccrb`, the bits of the mode;
- *                `kOverflowInterruptBit` and `kOverflowFlagBit`; `PwmChannel`,
- *                with `kPin`, `kCompareOutputBit` and `Compare()`; and
- *                `Tccra()`, `Tccrb()`, `Top()`, `Timsk()`, `Tifr()` and
- *                `Tcnt()`, which return its registers.
+ *                `kOverflowInterruptBit` and `kOverflowFlagBit`;
+ *                `kFirstChannel` and `kChannelCount`, the channels that give a
+ *                PWM, one after the other in Channel, and for each
+ *                `PwmChannel<Output>`, with `kPin`, `kCompareOutputBit` and
+ *                `Compare()`; and `Tccra()`, `Tccrb()`, `Top()`, `Timsk()`,
+ *                `Tifr()` and `Tcnt()`, which return its registers.
  */
 template <typename Traits>
 class Timer {
@@ -227,49 +239,64 @@ class Timer {
   }
 
   /*!
-   * \brief Starts the PWM on the pin of the channel, pin 3 for Timer2, with a
-   *        duty.
+   * \brief Starts the PWM of a channel on its pin, with a duty: channel B of
+   *        Timer2 on pin 3.
    *
-   * It breaks analogWrite() on that pin.
+   * It breaks analogWrite() on that pin. Each channel has a duty of its own.
    *
+   * \code{.cpp}
+   * atmega_timer::Discard(
+   *     atmega_timer::timer2.EnablePwm<atmega_timer::Channel::kB>(512));
+   * \endcode
+   *
+   * \tparam Output the channel; one the timer does not have does not compile
    * \param duty the duty, 0 for always low to kDutyMax for always high
    * \return Error::kNotBegun, or Error::kDutyOutOfRange
    */
+  template <Channel Output>
   ATMEGATIMER_NODISCARD Status EnablePwm(uint16_t duty) {
+    static_assert(HasChannel(Output), "the timer has no such channel");
     if (state_ == State::kNotBegun) {
       return Error::kNotBegun;
     }
     if (duty > kDutyMax) {
       return Error::kDutyOutOfRange;
     }
-    pinMode(Traits::PwmChannel::kPin, OUTPUT);
-    SetBit(Traits::Tccra(), Traits::PwmChannel::kCompareOutputBit);
-    return SetPwmDuty(duty);
+    pinMode(PwmChannelOf<Output>::kPin, OUTPUT);
+    SetBit(Traits::Tccra(), PwmChannelOf<Output>::kCompareOutputBit);
+    return SetPwmDuty<Output>(duty);
   }
 
   /*!
-   * \brief Sets the duty of the PWM, which EnablePwm() started or is to start.
+   * \brief Sets the duty of the PWM of a channel, which EnablePwm() started or
+   *        is to start.
+   * \tparam Output the channel; one the timer does not have does not compile
    * \param duty the duty, 0 for always low to kDutyMax for always high
    * \return Error::kNotBegun, or Error::kDutyOutOfRange
    */
+  template <Channel Output>
   ATMEGATIMER_NODISCARD Status SetPwmDuty(uint16_t duty) {
+    static_assert(HasChannel(Output), "the timer has no such channel");
     if (state_ == State::kNotBegun) {
       return Error::kNotBegun;
     }
     if (duty > kDutyMax) {
       return Error::kDutyOutOfRange;
     }
-    duty_ = duty;
-    Traits::PwmChannel::Compare() = CompareValue();
+    duties_[IndexOf(Output)] = duty;
+    PwmChannelOf<Output>::Compare() = CompareValue(duty);
     return Error::kOk;
   }
 
   /*!
-   * \brief Stops the PWM; the pin is a plain output again, at the level of its
-   *        bit in its PORT register.
+   * \brief Stops the PWM of a channel; the pin is a plain output again, at the
+   *        level of its bit in its PORT register.
+   * \tparam Output the channel; one the timer does not have does not compile
    */
+  template <Channel Output>
   void DisablePwm() {
-    ClearBit(Traits::Tccra(), Traits::PwmChannel::kCompareOutputBit);
+    static_assert(HasChannel(Output), "the timer has no such channel");
+    ClearBit(Traits::Tccra(), PwmChannelOf<Output>::kCompareOutputBit);
   }
 
   /*!
@@ -324,6 +351,25 @@ class Timer {
  private:
   using ClockSelect = typename Traits::ClockSelect;
 
+  template <Channel Output>
+  using PwmChannelOf = typename Traits::template PwmChannel<Output>;
+
+  // A channel's place among those of the timer, and in duties_.
+  static constexpr uint8_t IndexOf(Channel output) {
+    return static_cast<uint8_t>(static_cast<uint8_t>(output) -
+                                static_cast<uint8_t>(Traits::kFirstChannel));
+  }
+
+  // One before the first wraps around to 255, beyond the last as well.
+  static constexpr bool HasChannel(Channel output) {
+    return IndexOf(output) < Traits::kChannelCount;
+  }
+
+  // A channel by its place, to go through all of them when compiling: each
+  // has a register of its own, which no index reaches at run time.
+  template <uint8_t Index>
+  struct ChannelIndex {};
+
   // The top for a period, and in clock_select the smallest prescaler that lets
   // it fit the counter; 0 for a period too short for one step, or too long.
   // The counter runs up to the top and down again, so half the period is
@@ -346,22 +392,34 @@ class Timer {
     return 0U;
   }
 
-  // The compare value of duty_ at the top, rounded: 0 is the bottom, which
+  // The compare value of a duty at the top, rounded: 0 is the bottom, which
   // keeps the output low, and kDutyMax the top, which keeps it high. In 32
   // bits: 255 * 1023 does not fit 16.
-  uint8_t CompareValue() const {
-    uint32_t const product{static_cast<uint32_t>(Traits::Top()) * duty_};
+  static uint8_t CompareValue(uint16_t duty) {
+    uint32_t const product{static_cast<uint32_t>(Traits::Top()) * duty};
     return static_cast<uint8_t>((product + internal::kDutyRounding) / kDutyMax);
   }
 
   void ApplyPeriod(uint8_t top, ClockSelect clock_select) {
     clock_select_ = clock_select;
     Traits::Top() = top;
-    Traits::PwmChannel::Compare() = CompareValue();
+    ApplyDuties(ChannelIndex<0U>{});
     if (state_ == State::kRunning) {
       SelectClock(clock_select_);
     }
   }
+
+  // The duty of each channel at the top, from the one at Index on.
+  template <uint8_t Index>
+  void ApplyDuties(ChannelIndex<Index> /*index*/) {
+    constexpr Channel kOutput{static_cast<Channel>(
+        static_cast<uint8_t>(Traits::kFirstChannel) + Index)};
+    PwmChannelOf<kOutput>::Compare() = CompareValue(duties_[Index]);
+    ApplyDuties(ChannelIndex<static_cast<uint8_t>(Index + 1U)>{});
+  }
+
+  // Past the last channel: chosen over the template, as it is no template.
+  void ApplyDuties(ChannelIndex<Traits::kChannelCount> /*end*/) {}
 
   // The flag of an overflow stays set until the interrupt runs, even while it
   // is disabled: the core's init() runs Timer2 for analogWrite() before
@@ -395,8 +453,9 @@ class Timer {
   Callback volatile callback_{nullptr};
   State state_{State::kNotBegun};
   ClockSelect clock_select_{ClockSelect::kNoClock};
-  // The duty SetPwmDuty() was given, which a new period applies to its top.
-  uint16_t duty_{0};
+  // The duty SetPwmDuty() was given to each channel, which a new period
+  // applies to its top.
+  internal::array<uint16_t, Traits::kChannelCount> duties_{};
 };
 
 /*! \cond */
