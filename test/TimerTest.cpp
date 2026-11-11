@@ -31,6 +31,7 @@ uint8_t volatile other_compare_a{0};
 // bits, the prescalers 1, 8, 64 and 256, two channels, A on pin 10 and COM2A1
 // and B on pin 9 and COM2B0, and the interrupt and its flag at bits 1 and 2.
 struct OtherTraits {
+  using Counter = uint8_t;
   using TimeType = Timer2Traits::TimeType;
 
   enum class ClockSelect : uint8_t {
@@ -74,7 +75,7 @@ struct OtherTraits {
   static uint8_t volatile& Top() { return OCR2A; }
   static uint8_t volatile& Timsk() { return TIMSK2; }
   static uint8_t volatile& Tifr() { return TIFR2; }
-  static MockCounter& Tcnt() { return TCNT2; }
+  static MockCounter<uint8_t>& Tcnt() { return TCNT2; }
 };
 
 template <>

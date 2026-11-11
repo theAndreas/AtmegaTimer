@@ -3,14 +3,15 @@
 
 /*!
  * \file
- * \brief Timer, a periodic interrupt, a PWM and a time readout on an 8-bit
+ * \brief Timer, a periodic interrupt, a PWM and a time readout on a
  *        Timer/Counter of the AVR in phase correct PWM.
  *
  * The counter runs up to the top and down again: the period sets the top and
  * the prescaler; the overflow at the bottom calls the callback; and a channel
  * gives the PWM, at a duty that is a share of the top. What differs from one
  * Timer/Counter to another is in its traits, a parameter of the template:
- * timer2.h hands in those of Timer/Counter2 of the ATmega328P.
+ * timer1.h and timer2.h hand in those of Timer/Counter1 and Timer/Counter2 of
+ * the ATmega328P.
  */
 
 #ifndef ATMEGATIMER_SRC_ATMEGA_TIMER_TIMER_H_
@@ -59,36 +60,75 @@ namespace internal {
 // The clock select bits CSx2..CSx0, at the same place on every Timer/Counter.
 constexpr uint8_t kClockSelectMask{0x07U};
 
-// The counter has 256 values.
-constexpr uint32_t kCounterValues{256U};
 constexpr uint32_t kClocksPerMillisecond{F_CPU / 1000UL};
 constexpr uint32_t kMicrosecondsPerMillisecond{1000U};
 // The duty is a share of kDutyMax of the top, rounded.
 constexpr uint32_t kDutyRounding{kDutyMax / 2U};
+
+// The number of values of a counter: 256 of 8 bits, 65536 of 16.
+template <typename Counter>
+constexpr uint32_t CounterValues() {
+  return static_cast<uint32_t>(static_cast<Counter>(-1)) + 1U;
+}
+
+// The clocks of the longest period: every value of the counter up and down,
+// at the largest prescaler. In 64 bits, as a 16-bit counter at 1024 times
+// 1000 does not fit 32; only the compiler computes it.
+template <typename Counter>
+constexpr uint64_t LongestPeriodInClocks(uint8_t shift_largest) {
+  return (uint64_t{CounterValues<Counter>()} << shift_largest) * 2U;
+}
+
+// Half of clocks_of_ms + clocks_of_us / 1000, rounded down: clocks_of_ms the
+// clocks of the whole milliseconds, clocks_of_us those of the microseconds
+// left, times 1000. Half of the odd clock of clocks_of_ms is 500 times 1000.
+constexpr uint32_t HalfOf(uint32_t clocks_of_ms, uint32_t clocks_of_us) {
+  return (clocks_of_ms / 2U) +
+         (((kMicrosecondsPerMillisecond * (clocks_of_ms % 2U)) + clocks_of_us) /
+          (2U * kMicrosecondsPerMillisecond));
+}
+
+// The clocks of half a period, rounded down. Its milliseconds and its
+// microseconds apart, so that neither product leaves 32 bits up to the
+// longest period of a 16-bit timer, about 134 s at 1 MHz.
+constexpr uint32_t HalfPeriodInClocks(uint32_t period) {
+  return HalfOf(kClocksPerMillisecond * (period / kMicrosecondsPerMillisecond),
+                kClocksPerMillisecond * (period % kMicrosecondsPerMillisecond));
+}
+
+// The microseconds of clocks, rounded down. Its whole milliseconds and the
+// clocks left apart, so that no product leaves 32 bits: 2 * 65535 steps of
+// 1024 clocks, times 1000, would.
+constexpr uint32_t MicrosecondsOf(uint32_t clocks) {
+  return ((clocks / kClocksPerMillisecond) * kMicrosecondsPerMillisecond) +
+         (((clocks % kClocksPerMillisecond) * kMicrosecondsPerMillisecond) /
+          kClocksPerMillisecond);
+}
 
 /*! \endcond */
 
 }  // namespace internal
 
 /*!
- * \brief A periodic interrupt, a PWM and a time readout on an 8-bit
- *        Timer/Counter in phase correct PWM, mode 5.
+ * \brief A periodic interrupt, a PWM and a time readout on a Timer/Counter in
+ *        phase correct PWM: mode 8 on Timer1, mode 5 on Timer2.
  *
  * Begin() first, then Start(). A function that can refuse returns a Status,
  * and leaves the timer as it was when it refuses. A sketch uses the one that
- * timer2.h gives, timer2.
+ * timer1.h or timer2.h gives, timer1 or timer2.
  *
- * \tparam Traits the Timer/Counter, as Timer2Traits gives it: `TimeType`;
- *                `ClockSelect`, its prescalers, `kNoClock` at 0 and `kDivide1`
- *                at 1, the others in the values after it up to
- *                `kClockSelectLargest`, with `kShiftLargest` and `ShiftOf()`;
- *                `kModeTccra` and `kModeTccrb`, the bits of the mode;
- *                `kOverflowInterruptBit` and `kOverflowFlagBit`;
- *                `kFirstChannel` and `kChannelCount`, the channels that give a
- *                PWM, one after the other in Channel, and for each
- *                `PwmChannel<Output>`, with `kPin`, `kCompareOutputBit` and
- *                `Compare()`; and `Tccra()`, `Tccrb()`, `Top()`, `Timsk()`,
- *                `Tifr()` and `Tcnt()`, which return its registers.
+ * \tparam Traits the Timer/Counter, as Timer2Traits gives it: `Counter`, the
+ *                type of its counter, 8 or 16 bits; `TimeType`; `ClockSelect`,
+ *                its prescalers, `kNoClock` at 0 and `kDivide1` at 1, the
+ *                others in the values after it up to `kClockSelectLargest`,
+ *                with `kShiftLargest` and `ShiftOf()`; `kModeTccra` and
+ *                `kModeTccrb`, the bits of the mode; `kOverflowInterruptBit`
+ *                and `kOverflowFlagBit`; `kFirstChannel` and `kChannelCount`,
+ *                the channels that give a PWM, one after the other in Channel,
+ *                and for each `PwmChannel<Output>`, with `kPin`,
+ *                `kCompareOutputBit` and `Compare()`; and `Tccra()`, `Tccrb()`,
+ *                `Top()`, `Timsk()`, `Tifr()` and `Tcnt()`, which return its
+ *                registers.
  */
 template <typename Traits>
 class Timer {
@@ -97,11 +137,13 @@ class Timer {
   using TimeType = typename Traits::TimeType;
 
   /*!
-   * \brief The longest period, in microseconds: the last whose half fits 256
-   *        steps of the largest prescaler. 32767 on Timer2 at 16 MHz.
+   * \brief The longest period, in microseconds: the last whose half fits every
+   *        step of the counter at the largest prescaler. At 16 MHz 32767 on
+   *        Timer2, 8388607 on Timer1.
    */
   static constexpr TimeType kPeriodMax{static_cast<TimeType>(
-      (((internal::kCounterValues << Traits::kShiftLargest) * 2U *
+      ((internal::LongestPeriodInClocks<typename Traits::Counter>(
+            Traits::kShiftLargest) *
         internal::kMicrosecondsPerMillisecond) -
        1U) /
       internal::kClocksPerMillisecond)};
@@ -119,7 +161,7 @@ class Timer {
   ATMEGATIMER_NODISCARD Status Begin(TimeType period = kDefaultPeriod,
                                      Callback callback = nullptr) {
     ClockSelect clock_select{ClockSelect::kNoClock};
-    uint8_t const top{TopOf(period, clock_select)};
+    Counter const top{TopOf(period, clock_select)};
     if (state_ != State::kNotBegun) {
       return Error::kBegunAlready;
     }
@@ -146,7 +188,7 @@ class Timer {
    */
   ATMEGATIMER_NODISCARD Status SetPeriod(TimeType period) {
     ClockSelect clock_select{ClockSelect::kNoClock};
-    uint8_t const top{TopOf(period, clock_select)};
+    Counter const top{TopOf(period, clock_select)};
     if (state_ == State::kNotBegun) {
       return Error::kNotBegun;
     }
@@ -312,23 +354,20 @@ class Timer {
     if (state_ != State::kRunning) {
       return Error::kNotRunning;
     }
-    uint16_t steps{Traits::Tcnt()};
-    uint8_t next{Traits::Tcnt()};
+    // Up and down, the steps of a 16-bit counter take 17 bits.
+    uint32_t steps{Traits::Tcnt()};
+    Counter next{Traits::Tcnt()};
     while (next == steps) {
       next = Traits::Tcnt();
     }
     // Counting down: up to the top, and back to where it is.
     if (next < steps) {
-      steps = static_cast<uint16_t>((2U * Traits::Top()) - steps);
+      uint32_t const top{Traits::Top()};
+      steps = (2U * top) - steps;
     }
-    // In clocks, then in microseconds: multiplied before divided, so that no
-    // step is lost. At most 2 * 255 steps of 1024 clocks, times 1000, fit 32
-    // bits; the time is below kPeriodMax, which TimeType holds.
-    uint32_t const clocks{static_cast<uint32_t>(steps)
-                          << Traits::ShiftOf(clock_select_)};
-    return static_cast<TimeType>(
-        (clocks * internal::kMicrosecondsPerMillisecond) /
-        internal::kClocksPerMillisecond);
+    // The time is below kPeriodMax, which TimeType holds.
+    uint32_t const clocks{steps << Traits::ShiftOf(clock_select_)};
+    return static_cast<TimeType>(internal::MicrosecondsOf(clocks));
   }
 
   /*! \brief Where the timer is in its life. */
@@ -350,6 +389,7 @@ class Timer {
 
  private:
   using ClockSelect = typename Traits::ClockSelect;
+  using Counter = typename Traits::Counter;
 
   template <Channel Output>
   using PwmChannelOf = typename Traits::template PwmChannel<Output>;
@@ -373,19 +413,17 @@ class Timer {
   // The top for a period, and in clock_select the smallest prescaler that lets
   // it fit the counter; 0 for a period too short for one step, or too long.
   // The counter runs up to the top and down again, so half the period is
-  // counted. Multiplied before divided, so that a clock below 2 MHz keeps its
-  // cycles; up to kPeriodMax the product is below 2^29.
-  static uint8_t TopOf(TimeType period, ClockSelect& clock_select) {
-    uint32_t const half{(internal::kClocksPerMillisecond * period) /
-                        (2U * internal::kMicrosecondsPerMillisecond)};
+  // counted.
+  static Counter TopOf(TimeType period, ClockSelect& clock_select) {
+    uint32_t const half{internal::HalfPeriodInClocks(period)};
     for (uint8_t select{static_cast<uint8_t>(ClockSelect::kDivide1)};
          select <= static_cast<uint8_t>(Traits::kClockSelectLargest);
          ++select) {
       uint32_t const top{half >>
                          Traits::ShiftOf(static_cast<ClockSelect>(select))};
-      if (top < internal::kCounterValues) {
+      if (top < internal::CounterValues<Counter>()) {
         clock_select = static_cast<ClockSelect>(select);
-        return static_cast<uint8_t>(top);
+        return static_cast<Counter>(top);
       }
     }
     clock_select = ClockSelect::kNoClock;
@@ -394,13 +432,13 @@ class Timer {
 
   // The compare value of a duty at the top, rounded: 0 is the bottom, which
   // keeps the output low, and kDutyMax the top, which keeps it high. In 32
-  // bits: 255 * 1023 does not fit 16.
-  static uint8_t CompareValue(uint16_t duty) {
+  // bits: 255 * 1023 does not fit 16, 65535 * 1023 does 32.
+  static Counter CompareValue(uint16_t duty) {
     uint32_t const product{static_cast<uint32_t>(Traits::Top()) * duty};
-    return static_cast<uint8_t>((product + internal::kDutyRounding) / kDutyMax);
+    return static_cast<Counter>((product + internal::kDutyRounding) / kDutyMax);
   }
 
-  void ApplyPeriod(uint8_t top, ClockSelect clock_select) {
+  void ApplyPeriod(Counter top, ClockSelect clock_select) {
     clock_select_ = clock_select;
     Traits::Top() = top;
     ApplyDuties(ChannelIndex<0U>{});

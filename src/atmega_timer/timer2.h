@@ -27,6 +27,9 @@ namespace atmega_timer {
  * compiler writes it where the datasheet says.
  */
 struct Timer2Traits {
+  /*! \brief The type of the counter and its registers: 8 bits. */
+  using Counter = uint8_t;
+
   /*!
    * \brief A time in microseconds: 32 bits below 8 MHz, where the longest
    *        period does not fit into 16.
