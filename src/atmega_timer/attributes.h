@@ -18,8 +18,8 @@
  * \def ATMEGATIMER_NODISCARD
  * \brief Marks a function whose result must not be ignored.
  *
- * Stands in front of the declaration: `ATMEGATIMER_NODISCARD int Read();`. A call
- * that drops the result is a warning, and an error in CI.
+ * Stands in front of the declaration: `ATMEGATIMER_NODISCARD int Read();`. A
+ * call that drops the result is a warning, and an error in CI.
  *
  * \note For a function only. On a type, as a class whose every result must be
  *       used, `[[nodiscard]]` of C++17 works, GCC's attribute before it does

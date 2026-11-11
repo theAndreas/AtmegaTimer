@@ -3,26 +3,14 @@
 
 #include "Arduino.h"
 
-#include <stddef.h>
+#include <stdint.h>
 
-#include <string>
+#include <array>
 
-MockSerial Serial;
+std::array<uint8_t, 20> mock_pin_mode{};
 
-size_t Print::print(__FlashStringHelper const* text) {
-  return print(reinterpret_cast<char const*>(text));
-}
-
-size_t Print::print(char const* text) {
-  size_t count{0};
-  while (*text != '\0') {
-    count += write(static_cast<uint8_t>(*text++));
+void pinMode(uint8_t pin, uint8_t mode) {
+  if (pin < mock_pin_mode.size()) {
+    mock_pin_mode[pin] = mode;
   }
-  return count;
 }
-
-size_t Print::print(unsigned int number) {
-  return print(std::to_string(number).c_str());
-}
-
-size_t Print::println() { return print("\r\n"); }

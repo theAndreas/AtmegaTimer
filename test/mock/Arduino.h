@@ -1,57 +1,30 @@
 // Copyright 2026 Andreas Burnickl
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// The part of the Arduino core that the library uses, for the tests on the
-// host: __FlashStringHelper and F(), and Print and Serial, which print into a
-// std::string the tests read. The host has no separate flash, so a text "in
-// flash" is a text in RAM here; that the library reads flash with pgm_read is
-// what SelfCheck in simavr checks, not these tests. Extend it as the library
-// comes to use more of the core.
+// The part of the Arduino core that AtmegaTimer uses, for the tests on the
+// host: pinMode(), which records the mode of each pin for the tests to read.
+// The core's constants are macros; here they are constants by the same names,
+// which is all the library needs. Extend it as the library comes to use more
+// of the core.
 
 #ifndef ATMEGATIMER_TEST_MOCK_ARDUINO_H_
 #define ATMEGATIMER_TEST_MOCK_ARDUINO_H_
 
-#include <stddef.h>
 #include <stdint.h>
 
-#include <string>
+#include <array>
 
-// The core's name, reserved as it is: the library takes this very type.
-class __FlashStringHelper;  // NOLINT(bugprone-reserved-identifier)
+// The core's names.
+// NOLINTBEGIN(readability-identifier-naming)
+constexpr uint8_t INPUT{0x0};
+constexpr uint8_t OUTPUT{0x1};
 
-// The core's macros, as it defines them.
-// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
-#define PSTR(text) (text)
-// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
-#define F(text) (reinterpret_cast<__FlashStringHelper const*>(PSTR(text)))
+// The core's function, which records the mode.
+void pinMode(uint8_t pin, uint8_t mode);
+// NOLINTEND(readability-identifier-naming)
 
-// As the core's Print: write() is what a derived class provides, print()
-// what the library calls. Copied and moved as the core's is, by the compiler.
-class Print {  // NOLINT(cppcoreguidelines-special-member-functions)
- public:
-  virtual ~Print() = default;
-
-  virtual size_t write(uint8_t c) = 0;
-
-  size_t print(__FlashStringHelper const* text);
-  size_t print(char const* text);
-  size_t print(char c) { return write(static_cast<uint8_t>(c)); }
-  size_t print(unsigned int number);
-  size_t println();
-};
-
-// What the sketch would print on Serial, in `output`.
-class MockSerial : public Print {
- public:
-  size_t write(uint8_t c) override {
-    output.push_back(static_cast<char>(c));
-    return 1;
-  }
-
-  std::string output;
-};
-
-// The core's name for it; a global, as test/.clang-tidy allows.
-extern MockSerial Serial;  // NOLINT(readability-identifier-naming)
+// The mode pinMode() last set for each of the Uno's 20 pins, INPUT after a
+// reset.
+extern std::array<uint8_t, 20> mock_pin_mode;
 
 #endif  // ATMEGATIMER_TEST_MOCK_ARDUINO_H_
