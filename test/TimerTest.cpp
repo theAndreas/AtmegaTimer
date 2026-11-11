@@ -21,6 +21,58 @@
 namespace atmega_timer {
 namespace {
 
+// Traits on the registers of Timer2 whose every other value differs from
+// Timer2Traits, so that a test shows where Timer takes it from: other mode
+// bits, the prescalers 1, 8, 64 and 256, pin 9 and COM2B0, and the interrupt
+// and its flag at bits 1 and 2.
+struct OtherTraits {
+  using TimeType = atmega_timer::TimeType;
+
+  enum class ClockSelect : uint8_t {
+    kNoClock = 0,
+    kDivide1,
+    kDivide8,
+    kDivide64,
+    kDivide256
+  };
+  static constexpr ClockSelect kClockSelectLargest{ClockSelect::kDivide256};
+  static constexpr uint8_t kShiftLargest{8U};
+
+  static uint8_t ShiftOf(ClockSelect clock_select) {
+    switch (clock_select) {
+      case ClockSelect::kDivide8:
+        return 3U;
+      case ClockSelect::kDivide64:
+        return 6U;
+      case ClockSelect::kDivide256:
+        return kShiftLargest;
+      case ClockSelect::kNoClock:
+      case ClockSelect::kDivide1:
+      default:
+        return 0U;
+    }
+  }
+
+  // WGM21 alone.
+  static constexpr uint8_t kModeTccra{0x02U};
+  static constexpr uint8_t kModeTccrb{0U};
+  static constexpr uint8_t kOverflowInterruptBit{1U};
+  static constexpr uint8_t kOverflowFlagBit{2U};
+
+  struct PwmChannel {
+    static constexpr uint8_t kPin{9};
+    static constexpr uint8_t kCompareOutputBit{COM2B0};
+    static uint8_t volatile& Compare() { return OCR2B; }
+  };
+
+  static uint8_t volatile& Tccra() { return TCCR2A; }
+  static uint8_t volatile& Tccrb() { return TCCR2B; }
+  static uint8_t volatile& Top() { return OCR2A; }
+  static uint8_t volatile& Timsk() { return TIMSK2; }
+  static uint8_t volatile& Tifr() { return TIFR2; }
+  static MockCounter& Tcnt() { return TCNT2; }
+};
+
 // The bits of TCCR2B that select the clock, and their values.
 constexpr uint8_t kClockSelectMask{0x07};
 constexpr uint8_t kDivide1{1};
@@ -58,9 +110,11 @@ class TimerTest : public ::testing::Test {
   }
 
   Timer2& timer() { return timer_; }
+  Timer<OtherTraits>& other_timer() { return other_timer_; }
 
  private:
   Timer2 timer_;
+  Timer<OtherTraits> other_timer_;
 };
 
 TEST_F(TimerTest, BeginSetsPhaseCorrectPwmWithoutAClock) {
@@ -499,6 +553,73 @@ TEST_F(TimerTest, ReadScalesByEachPrescaler) {
     ASSERT_TRUE(result.IsOk()) << "period " << c.period;
     EXPECT_EQ(result.GetValue(), c.sixteen_steps) << "period " << c.period;
   }
+}
+
+TEST_F(TimerTest, BeginSetsTheModeOfTheTraits) {
+  TCCR2A = 0xFF;
+  TCCR2B = 0xFF;
+
+  EXPECT_EQ(other_timer().Begin(), Error::kOk);
+
+  // WGM21 alone, and no clock.
+  EXPECT_EQ(TCCR2A, 0x02);
+  EXPECT_EQ(TCCR2B, 0x00);
+}
+
+TEST_F(TimerTest, APeriodTakesThePrescalersOfTheTraits) {
+  ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
+
+  ASSERT_EQ(other_timer().Start(), Error::kOk);
+
+  // 8000 clocks up, which 32 of Timer2 would make 250 steps; here 64 makes
+  // 125, selected by the third value.
+  EXPECT_EQ(OCR2A, 125);
+  EXPECT_EQ(ClockSelect(), 3);
+}
+
+TEST_F(TimerTest, TheLongestPeriodIsThatOfTheLargestPrescalerOfTheTraits) {
+  // 256 steps up and down at 16 MHz / 256.
+  EXPECT_EQ(Timer<OtherTraits>::kPeriodMax, 8191U);
+}
+
+TEST_F(TimerTest, EnablePwmDrivesThePinAndTheBitOfTheTraits) {
+  ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
+
+  EXPECT_EQ(other_timer().EnablePwm(512), Error::kOk);
+
+  EXPECT_EQ(mock_pin_mode[9], OUTPUT);
+  EXPECT_EQ(mock_pin_mode[3], INPUT);
+  EXPECT_TRUE(BitIsSet(TCCR2A, COM2B0));
+  EXPECT_FALSE(BitIsSet(TCCR2A, COM2B1));
+  // 512 / 1023 of the top, 125, rounded.
+  EXPECT_EQ(OCR2B, 63);
+}
+
+TEST_F(TimerTest, DisablePwmClearsTheBitOfTheTraits) {
+  ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(other_timer().EnablePwm(512), Error::kOk);
+
+  other_timer().DisablePwm();
+
+  EXPECT_FALSE(BitIsSet(TCCR2A, COM2B0));
+}
+
+TEST_F(TimerTest, StartEnablesTheInterruptOfTheTraits) {
+  ASSERT_EQ(other_timer().Begin(1000U, CountOverflow), Error::kOk);
+
+  ASSERT_EQ(other_timer().Start(), Error::kOk);
+
+  EXPECT_EQ(TIMSK2, 0x02);
+  EXPECT_EQ(TIFR2, 0x04);
+}
+
+TEST_F(TimerTest, DetachInterruptDisablesTheInterruptOfTheTraits) {
+  ASSERT_EQ(other_timer().Begin(1000U, CountOverflow), Error::kOk);
+  ASSERT_EQ(other_timer().Start(), Error::kOk);
+
+  other_timer().DetachInterrupt();
+
+  EXPECT_EQ(TIMSK2, 0x00);
 }
 
 }  // namespace
