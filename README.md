@@ -5,8 +5,9 @@ A periodic interrupt, a PWM on every channel a timer leaves free, and a time rea
 continues [TimerTwo](https://github.com/theAndreas/TimerTwo) 2.0.0, which had Timer2 alone.
 
 AtmegaTimer is in development and not yet in the Library Manager. Timer3 to Timer5 of the
-ATmega2560 of the Mega, and CTC as a second mode, come before 1.0.0; [ROADMAP.md](ROADMAP.md)
-says what comes in which order.
+ATmega2560 of the Mega, and CTC as a second mode, come before 1.0.0;
+[ROADMAP.md](https://github.com/theAndreas/AtmegaTimer/blob/main/ROADMAP.md) says what comes in
+which order.
 
 ## The timers
 
