@@ -1,0 +1,11 @@
+pass: timer2_ctc calls back 100 times in 100 ms
+pass: timer2_ctc reads a time within the period
+pass: timer2_ctc calls back 200 times in 100 ms after a new period
+pass: timer1_ctc calls back 100 times in 100 ms
+pass: timer1_ctc reads a time within the period
+pass: timer1_ctc calls back 200 times in 100 ms after a new period
+pass: timer2_ctc puts out the high time
+pass: timer2_ctc puts out the low time
+pass: timer1_ctc puts out the high time
+pass: timer1_ctc puts out the low time
+failed: 0

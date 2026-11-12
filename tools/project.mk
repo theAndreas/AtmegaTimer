@@ -9,3 +9,6 @@
 #
 #   sizes: ## The README's table of flash and RAM against the build
 #   	tools/sizes.sh
+
+board-check: ## examples/SelfCheck on a board, wired as the sketch says: make board-check PORT=/dev/ttyACM0
+	tools/board_check.sh "$(PORT)"
