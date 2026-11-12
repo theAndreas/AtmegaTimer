@@ -11,8 +11,11 @@
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define ISR(vector) extern "C" void vector()
 
-// The handlers of the overflows of Timer1 and Timer2, which a test calls.
-extern "C" void TIMER1_OVF_vect();  // NOLINT(readability-identifier-naming)
-extern "C" void TIMER2_OVF_vect();  // NOLINT(readability-identifier-naming)
+// The handlers of the overflows of Timer1 and Timer2, of the input capture of
+// Timer1 and of the compare match A of Timer2, which a test calls.
+extern "C" void TIMER1_OVF_vect();    // NOLINT(readability-identifier-naming)
+extern "C" void TIMER2_OVF_vect();    // NOLINT(readability-identifier-naming)
+extern "C" void TIMER1_CAPT_vect();   // NOLINT(readability-identifier-naming)
+extern "C" void TIMER2_COMPA_vect();  // NOLINT(readability-identifier-naming)
 
 #endif  // ATMEGATIMER_TEST_MOCK_AVR_INTERRUPT_H_

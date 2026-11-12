@@ -16,6 +16,7 @@
 #include "atmega_timer/phase_correct_pwm.h"
 #include "atmega_timer/status.h"
 #include "atmega_timer/timer2.h"
+#include "atmega_timer/timer2_traits.h"
 #include "test/printers.h"  // IWYU pragma: keep
 
 namespace atmega_timer {

@@ -1,0 +1,4 @@
+pass: timer2_ctc calls back 100 times in 100 ms
+pass: timer2_ctc reads a time within the period
+pass: timer2_ctc calls back 200 times in 100 ms after a new period
+failed: 0

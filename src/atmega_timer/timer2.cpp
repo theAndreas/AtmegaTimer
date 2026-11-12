@@ -7,43 +7,15 @@
 #include <avr/io.h>
 #include <stdint.h>
 
+#include "atmega_timer/timer2_traits.h"
+
 namespace atmega_timer {
-
-namespace {
-
-// The prescalers 8 to 256 as shifts; 1024 is kShiftLargest.
-constexpr uint8_t kShiftDivide8{3U};
-constexpr uint8_t kShiftDivide32{5U};
-constexpr uint8_t kShiftDivide64{6U};
-constexpr uint8_t kShiftDivide128{7U};
-constexpr uint8_t kShiftDivide256{8U};
-
-}  // namespace
-
-// A switch rather than a table, which avr-gcc would copy to RAM.
-uint8_t Timer2Traits::ShiftOf(ClockSelect clock_select) {
-  switch (clock_select) {
-    case ClockSelect::kDivide8:
-      return kShiftDivide8;
-    case ClockSelect::kDivide32:
-      return kShiftDivide32;
-    case ClockSelect::kDivide64:
-      return kShiftDivide64;
-    case ClockSelect::kDivide128:
-      return kShiftDivide128;
-    case ClockSelect::kDivide256:
-      return kShiftDivide256;
-    case ClockSelect::kDivide1024:
-      return kShiftLargest;
-    case ClockSelect::kNoClock:
-    case ClockSelect::kDivide1:
-    default:
-      return 0U;
-  }
-}
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 Timer2 timer2;
+
+// timer2_ctc.cpp defines it as well, so that a sketch takes one of the two.
+uint8_t const internal::kOneObjectOnTimer2{0U};
 
 }  // namespace atmega_timer
 
