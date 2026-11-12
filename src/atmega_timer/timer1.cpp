@@ -41,4 +41,4 @@ Timer1 timer1;
 
 }  // namespace atmega_timer
 
-ISR(TIMER1_OVF_vect) { atmega_timer::timer1.OnOverflow(); }
+ISR(TIMER1_OVF_vect) { atmega_timer::timer1.OnInterrupt(); }

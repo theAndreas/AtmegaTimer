@@ -11,8 +11,8 @@
 
 #include <ostream>
 
+#include "atmega_timer/core.h"
 #include "atmega_timer/status.h"
-#include "atmega_timer/timer.h"
 
 namespace atmega_timer {
 

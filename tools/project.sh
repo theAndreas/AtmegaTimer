@@ -53,3 +53,5 @@ SIMAVR_FREQUENCY="16000000"
 #   }
 VARIANTS=(default)
 TIDY_VARIANTS=(default)
+# internal::Core is the base each mode takes Begin(), Start() and the rest from.
+DOCS_INTERNAL_API='core\.h'

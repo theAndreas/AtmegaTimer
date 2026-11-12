@@ -15,14 +15,15 @@
 #include <avr/io.h>
 #include <stdint.h>
 
-#include "atmega_timer/timer.h"
+#include "atmega_timer/phase_correct_pwm.h"
 
 namespace atmega_timer {
 
 /*!
- * \brief Timer/Counter2 of the ATmega328P, for Timer: in phase correct PWM,
- *        mode 5, with OCR2A as its top and OC2B as its PWM.
+ * \brief Timer/Counter2 of the ATmega328P, for the modes of a timer: its
+ *        registers, its prescalers and its channels.
  *
+ * PhaseCorrectPwmMode is mode 5, with OCR2A as its top and OC2B as its PWM.
  * Each register is returned as the vendor's header declares it, so that the
  * compiler writes it where the datasheet says.
  */
@@ -64,29 +65,32 @@ struct Timer2Traits {
    */
   static uint8_t ShiftOf(ClockSelect clock_select);
 
-  /*! \brief TCCR2A in mode 5: WGM20. */
-  static constexpr uint8_t kModeTccra{1U << WGM20};
-  /*! \brief TCCR2B in mode 5: WGM22, and no clock. */
-  static constexpr uint8_t kModeTccrb{1U << WGM22};
-  /*! \brief Whether the hardware buffers the top: OCR2A is, and taken at the
-   * top in mode 5. */
-  static constexpr bool kTopIsBuffered{true};
-  /*! \brief The bit of TIMSK2 that enables the overflow interrupt. */
-  static constexpr uint8_t kOverflowInterruptBit{TOIE2};
-  /*! \brief The bit of TIFR2 that flags an overflow. */
-  static constexpr uint8_t kOverflowFlagBit{TOV2};
-
-  /*! \brief The first channel that gives a PWM: B, as OCR2A is the top. */
-  static constexpr Channel kFirstChannel{Channel::kB};
-  /*! \brief The number of channels that give a PWM: B alone. */
-  static constexpr uint8_t kChannelCount{1U};
+  /*! \brief Timer/Counter2 in phase correct PWM, mode 5, for PhaseCorrectPwm.
+   */
+  struct PhaseCorrectPwmMode {
+    /*! \brief TCCR2A in mode 5: WGM20. */
+    static constexpr uint8_t kModeTccra{1U << WGM20};
+    /*! \brief TCCR2B in mode 5: WGM22, and no clock. */
+    static constexpr uint8_t kModeTccrb{1U << WGM22};
+    /*! \brief Whether the hardware buffers the top: OCR2A is, and taken at the
+     * top in mode 5. */
+    static constexpr bool kTopIsBuffered{true};
+    /*! \brief The bit of TIMSK2 that enables the overflow interrupt. */
+    static constexpr uint8_t kInterruptBit{TOIE2};
+    /*! \brief The bit of TIFR2 that flags an overflow. */
+    static constexpr uint8_t kFlagBit{TOV2};
+    /*! \brief The first channel that gives a PWM: B, as OCR2A is the top. */
+    static constexpr Channel kFirstChannel{Channel::kB};
+    /*! \brief The number of channels that give a PWM: B alone. */
+    static constexpr uint8_t kChannelCount{1U};
+  };
 
   /*!
-   * \brief A channel that gives a PWM.
-   * \tparam Output the channel, Channel::kB alone
+   * \brief The compare output of a channel: its pin, its bits and its register.
+   * \tparam Which the channel, Channel::kB alone
    */
-  template <Channel Output>
-  struct PwmChannel;
+  template <Channel Which>
+  struct CompareOutput;
 
   /*! \brief TCCR2A. */
   static auto Tccra() -> decltype((TCCR2A)) { return TCCR2A; }
@@ -104,7 +108,7 @@ struct Timer2Traits {
 
 /*! \brief OC2B, the channel of Timer2 that gives the PWM. */
 template <>
-struct Timer2Traits::PwmChannel<Channel::kB> {
+struct Timer2Traits::CompareOutput<Channel::kB> {
   /*! \brief The Arduino pin of OC2B, PD3. */
   static constexpr uint8_t kPin{3};
   /*! \brief The bit of TCCR2A that connects OC2B: COM2B1, non-inverting. */
@@ -114,7 +118,7 @@ struct Timer2Traits::PwmChannel<Channel::kB> {
 };
 
 /*! \brief The type of timer2, for its constants: `Timer2::kPeriodMax`. */
-using Timer2 = Timer<Timer2Traits>;
+using Timer2 = PhaseCorrectPwm<Timer2Traits>;
 
 /*!
  * \brief Timer/Counter2; its overflow interrupt calls the callback.

@@ -13,8 +13,8 @@
 #include <array>
 #include <string>
 
+#include "atmega_timer/phase_correct_pwm.h"
 #include "atmega_timer/status.h"
-#include "atmega_timer/timer.h"
 #include "atmega_timer/timer1.h"
 #include "atmega_timer/timer2.h"
 #include "test/printers.h"  // IWYU pragma: keep
