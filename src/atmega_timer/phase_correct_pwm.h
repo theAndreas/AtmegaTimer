@@ -44,23 +44,6 @@ template <typename Counter>
 constexpr uint64_t LongestPeriodInClocks(uint8_t shift_largest) {
   return (uint64_t{CounterValues<Counter>()} << shift_largest) * 2U;
 }
-
-// Half of clocks_of_ms + clocks_of_us / 1000, rounded down: clocks_of_ms the
-// clocks of the whole milliseconds, clocks_of_us those of the microseconds
-// left, times 1000. Half of the odd clock of clocks_of_ms is 500 times 1000.
-constexpr uint32_t HalfOf(uint32_t clocks_of_ms, uint32_t clocks_of_us) {
-  return (clocks_of_ms / 2U) +
-         (((kMicrosecondsPerMillisecond * (clocks_of_ms % 2U)) + clocks_of_us) /
-          (2U * kMicrosecondsPerMillisecond));
-}
-
-// The clocks of half a period, rounded down. Its milliseconds and its
-// microseconds apart, so that neither product leaves 32 bits up to the
-// longest period of a 16-bit timer, about 134 s at 1 MHz.
-constexpr uint32_t HalfPeriodInClocks(uint32_t period) {
-  return HalfOf(kClocksPerMillisecond * (period / kMicrosecondsPerMillisecond),
-                kClocksPerMillisecond * (period % kMicrosecondsPerMillisecond));
-}
 /*! \endcond */
 
 }  // namespace internal
@@ -203,24 +186,22 @@ class PhaseCorrectPwm
   template <uint8_t Index>
   using ChannelIndex = typename Base::template ChannelIndex<Index>;
 
+  // The most steps of half a period, for Base: the top, the last value of the
+  // counter.
+  static constexpr uint32_t kStepsMax{internal::CounterValues<Counter>() - 1U};
+
   // The top for a period, and in clock_select the smallest prescaler that lets
   // it fit the counter; 0 for a period too short for one step, or too long.
   // The counter runs up to the top and down again, so half the period is
-  // counted.
+  // counted. Half of the clocks rounded down is half of the period's clocks
+  // rounded down, as cutting the microseconds first cuts no whole half.
   static Counter TopOf(TimeType period, ClockSelect& clock_select) {
-    uint32_t const half{internal::HalfPeriodInClocks(period)};
-    for (uint8_t select{static_cast<uint8_t>(ClockSelect::kDivide1)};
-         select <= static_cast<uint8_t>(Traits::kClockSelectLargest);
-         ++select) {
-      uint32_t const top{half >>
-                         Traits::ShiftOf(static_cast<ClockSelect>(select))};
-      if (top < internal::CounterValues<Counter>()) {
-        clock_select = static_cast<ClockSelect>(select);
-        return static_cast<Counter>(top);
-      }
+    uint32_t const half{internal::PeriodInClocks(period) / 2U};
+    clock_select = Base::SmallestClockSelectFor(half);
+    if (clock_select == ClockSelect::kNoClock) {
+      return 0U;
     }
-    clock_select = ClockSelect::kNoClock;
-    return 0U;
+    return static_cast<Counter>(half >> Traits::ShiftOf(clock_select));
   }
 
   // The compare value of a duty at the top, rounded: 0 is the bottom, which

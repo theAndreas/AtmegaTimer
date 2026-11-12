@@ -67,6 +67,25 @@ constexpr uint32_t MicrosecondsOf(uint32_t clocks) {
          (((clocks % kClocksPerMillisecond) * kMicrosecondsPerMillisecond) /
           kClocksPerMillisecond);
 }
+
+// The clocks of the whole milliseconds of a period in microseconds.
+constexpr uint32_t ClocksOfTheMilliseconds(uint32_t period) {
+  return kClocksPerMillisecond * (period / kMicrosecondsPerMillisecond);
+}
+
+// The clocks of the microseconds of a period beyond its whole milliseconds,
+// rounded down.
+constexpr uint32_t ClocksOfTheMicroseconds(uint32_t period) {
+  return (kClocksPerMillisecond * (period % kMicrosecondsPerMillisecond)) /
+         kMicrosecondsPerMillisecond;
+}
+
+// The clocks of a period, rounded down. Its milliseconds and its microseconds
+// apart, so that neither product leaves 32 bits up to the longest period of a
+// 16-bit timer, about 134 s at 1 MHz.
+constexpr uint32_t PeriodInClocks(uint32_t period) {
+  return ClocksOfTheMilliseconds(period) + ClocksOfTheMicroseconds(period);
+}
 /*! \endcond */
 
 /*!
@@ -78,9 +97,11 @@ constexpr uint32_t MicrosecondsOf(uint32_t clocks) {
  * and timer2.h give, never this class itself.
  *
  * \tparam Derived the mode, which derives from this class: `kPeriodMax`, its
- *                 longest period; `TopOf()`, the top and the prescaler of a
- *                 period; and `ApplyChannels()`, which writes the compare value
- *                 of each channel for top().
+ *                 longest period; `kStepsMax`, the most steps of the counter
+ *                 that the clocks it counts of a period may take at one
+ *                 prescaler; `TopOf()`, the top and the prescaler of a period;
+ *                 and `ApplyChannels()`, which writes the compare value of each
+ *                 channel for top().
  * \tparam Traits the Timer/Counter, as Timer2Traits gives it: `Counter`, the
  *                type of its counter, 8 or 16 bits; `TimeType`; `ClockSelect`,
  *                its prescalers, `kNoClock` at 0 and `kDivide1` at 1, the
@@ -315,6 +336,21 @@ class Core {
 
   // The prescaler the counter runs at now.
   ClockSelect clock_select() const { return clock_select_; }
+
+  // The smallest prescaler at which clocks take at most the mode's kStepsMax
+  // steps of the counter, or kNoClock where the largest takes more.
+  static ClockSelect SmallestClockSelectFor(uint32_t clocks) {
+    for (uint8_t select{static_cast<uint8_t>(ClockSelect::kDivide1)};
+         select <= static_cast<uint8_t>(Traits::kClockSelectLargest);
+         ++select) {
+      ClockSelect const candidate{static_cast<ClockSelect>(select)};
+      uint32_t const steps{clocks >> Traits::ShiftOf(candidate)};
+      if (steps <= Derived::kStepsMax) {
+        return candidate;
+      }
+    }
+    return ClockSelect::kNoClock;
+  }
 
   // A register of a byte is read and written in one access.
   static constexpr bool kOneAccess{sizeof(Counter) == 1U};
