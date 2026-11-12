@@ -1,0 +1,11 @@
+pass: timer2 calls back 100 times in 100 ms
+pass: timer2 reads a time within the period
+pass: timer2 calls back 200 times in 100 ms after a new period
+pass: timer1 calls back 100 times in 100 ms
+pass: timer1 reads a time within the period
+pass: timer1 calls back 200 times in 100 ms after a new period
+pass: timer2 puts out the high time
+pass: timer2 puts out the low time
+pass: timer1 puts out the high time
+pass: timer1 puts out the low time
+failed: 0

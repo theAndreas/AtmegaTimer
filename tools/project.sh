@@ -36,8 +36,9 @@ NAMESPACE="atmega_timer"
 FQBN="arduino:avr:uno"
 ARDUINO_CORE="arduino:avr@1.8.8"
 ARDUINO_BOARD_URLS=""
-# atmega328p once examples/SelfCheck checks the timer in simavr (OIL 2).
-SIMAVR_MCU=""
+# simavr counts Timer2 in CTC as the AVR does, but no other timer and mode (ROADMAP.md, A-7):
+# examples/SelfCheck checks timer2_ctc alone here, the rest on a board, make board-check.
+SIMAVR_MCU="atmega328p"
 SIMAVR_FREQUENCY="16000000"
 
 # One build of each example, as avr-gcc builds it by default. A variant whose defines take
