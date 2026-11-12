@@ -62,7 +62,14 @@ function(add_variant name)
   gtest_discover_tests(atmega_timer_test_${name} TEST_PREFIX ${name}/ PROPERTIES TIMEOUT 10)
 endfunction()
 
+# timer1 and timer1_ctc, timer2 and timer2_ctc do not link into one program, as in a sketch
+# (ROADMAP.md, Decisions): the tests of the objects in CTC are a program of their own.
+set(ctc_object_tests ${CMAKE_SOURCE_DIR}/test/Timer1CtcTest.cpp
+                     ${CMAKE_SOURCE_DIR}/test/Timer2CtcTest.cpp)
+list(REMOVE_ITEM test_sources ${ctc_object_tests})
+
 add_variant(default)
+add_variant(ctc TESTS ${ctc_object_tests})
 # The clocks where TimerTwo 1 computed with a quotient of F_CPU that was cut or 0 (its OIL 2): the
 # tests that hold at any clock, as TimeType is 32 bits below 8 MHz.
 add_variant(1mhz CLOCK 1000000uL TESTS test/ClockTest.cpp)

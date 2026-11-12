@@ -25,8 +25,10 @@ namespace atmega_timer {
  *        registers, its prescalers and its channels.
  *
  * PhaseCorrectPwmMode is mode 5, with OCR2A as its top and OC2B as its PWM.
- * Each register is returned as the vendor's header declares it, so that the
- * compiler writes it where the datasheet says.
+ * CtcMode is mode 2, with OCR2A as its top, whose compare match A interrupt
+ * comes at the top, and OC2A and OC2B as its toggles. Each register is returned
+ * as the vendor's header declares it, so that the compiler writes it where the
+ * datasheet says.
  */
 struct Timer2Traits {
   /*! \brief The type of the counter and its registers: 8 bits. */
@@ -86,9 +88,31 @@ struct Timer2Traits {
     static constexpr uint8_t kChannelCount{1U};
   };
 
+  /*! \brief Timer/Counter2 in CTC, mode 2, for Ctc. */
+  struct CtcMode {
+    /*! \brief TCCR2A in mode 2: WGM21. */
+    static constexpr uint8_t kModeTccra{1U << WGM21};
+    /*! \brief TCCR2B in mode 2: no bit of the mode, and no clock. */
+    static constexpr uint8_t kModeTccrb{0U};
+    /*! \brief Whether the hardware buffers the top: OCR2A is not in CTC:
+     * written below the counter, it lets the counter run on to 255. */
+    static constexpr bool kTopIsBuffered{false};
+    /*! \brief The bit of TIMSK2 that enables the compare match A interrupt. */
+    static constexpr uint8_t kInterruptBit{OCIE2A};
+    /*! \brief The bit of TIFR2 that flags the compare match A, at the top. */
+    static constexpr uint8_t kFlagBit{OCF2A};
+    /*! \brief The first channel that toggles: A, at the top. */
+    static constexpr Channel kFirstChannel{Channel::kA};
+    /*! \brief The number of channels that toggle: A and B. */
+    static constexpr uint8_t kChannelCount{2U};
+    /*! \brief The first channel whose compare value is its own: B, as OCR2A is
+     * the top. */
+    static constexpr Channel kFirstOwnCompare{Channel::kB};
+  };
+
   /*!
    * \brief The compare output of a channel: its pin, its bits and its register.
-   * \tparam Which the channel, Channel::kB alone
+   * \tparam Which the channel, Channel::kA or Channel::kB
    */
   template <Channel Which>
   struct CompareOutput;
@@ -107,16 +131,41 @@ struct Timer2Traits {
   static auto Tcnt() -> decltype((TCNT2)) { return TCNT2; }
 };
 
-/*! \brief OC2B, the channel of Timer2 that gives the PWM. */
+/*!
+ * \brief OC2A, channel A of Timer2, which toggles at the top in CTC: its
+ *        compare value is the top, OCR2A, so it gives no PWM.
+ */
+template <>
+struct Timer2Traits::CompareOutput<Channel::kA> {
+  /*! \brief The Arduino pin of OC2A, PB3. */
+  static constexpr uint8_t kPin{11};
+  /*! \brief The bit of TCCR2A that toggles OC2A at each match: COM2A0. */
+  static constexpr uint8_t kToggleBit{COM2A0};
+};
+
+/*! \brief OC2B, channel B of Timer2, which gives the PWM. */
 template <>
 struct Timer2Traits::CompareOutput<Channel::kB> {
   /*! \brief The Arduino pin of OC2B, PD3. */
   static constexpr uint8_t kPin{3};
   /*! \brief The bit of TCCR2A that connects OC2B: COM2B1, non-inverting. */
   static constexpr uint8_t kCompareOutputBit{COM2B1};
-  /*! \brief OCR2B, the compare value of the PWM. */
+  /*! \brief The bit of TCCR2A that toggles OC2B at each match: COM2B0. */
+  static constexpr uint8_t kToggleBit{COM2B0};
+  /*! \brief OCR2B, its compare value. */
   static auto Compare() -> decltype((OCR2B)) { return OCR2B; }
 };
+
+namespace internal {
+
+/*! \cond */
+// Defined by timer2.cpp and by timer2_ctc.cpp alike: a sketch that uses timer2
+// and timer2_ctc fails to link, with this name in the linker's message,
+// rather than have two objects drive one timer.
+extern uint8_t const kOneObjectOnTimer2;
+/*! \endcond */
+
+}  // namespace internal
 
 }  // namespace atmega_timer
 

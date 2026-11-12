@@ -28,7 +28,9 @@ constexpr int CS10{0};
 constexpr int CS11{1};
 constexpr int CS12{2};
 constexpr int TOIE1{0};
+constexpr int ICIE1{5};
 constexpr int TOV1{0};
+constexpr int ICF1{5};
 constexpr int WGM20{0};
 constexpr int WGM21{1};
 constexpr int COM2B0{4};
@@ -40,7 +42,9 @@ constexpr int CS21{1};
 constexpr int CS22{2};
 constexpr int WGM22{3};
 constexpr int TOIE2{0};
+constexpr int OCIE2A{1};
 constexpr int TOV2{0};
+constexpr int OCF2A{1};
 // NOLINTEND(readability-identifier-naming)
 
 // TCNTn, which counts on each read while its TCCRnB selects a clock, up to
