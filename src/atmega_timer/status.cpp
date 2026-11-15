@@ -25,7 +25,7 @@ char const kTextUnknownError[] PROGMEM = "unknown error";
 
 // In the order of Error. An array, as PROGMEM takes one.
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)
-char const* const kTexts[] PROGMEM = {
+char const* const kTexts[] PROGMEM{
     kTextOk,
     kTextNotBegun,
     kTextBegunAlready,

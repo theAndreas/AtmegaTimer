@@ -34,7 +34,7 @@ void Check(atmega_timer::Status status, __FlashStringHelper const* call) {
 void setup() {
   Serial.begin(kBaudRate);
   pinMode(kLedPin, OUTPUT);
-  auto& timer = atmega_timer::timer2;
+  auto& timer{atmega_timer::timer2};
   Check(timer.Begin(atmega_timer::Timer2::kPeriodMax, OnTick), F("Begin"));
   Check(timer.EnablePwm<atmega_timer::Channel::kB>(511), F("EnablePwm"));
   Check(timer.Start(), F("Start"));
