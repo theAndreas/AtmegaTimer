@@ -99,3 +99,8 @@ exception goes at the end of a list, with its reason.
 
 <!-- What an agent has to know of this project beyond the template: its design, its terms, what
      not to touch. The template wrote this section once; an update keeps what is added here. -->
+
+- **The bit class** (CodingStyle H-9) is `src/atmega_timer/Bit.h`: the skeleton's `Bit` of the
+  template's v0.10.1, which A-12 brought in, with `ShiftUp()` and `ShiftDown()` added for the
+  steps of the counter and the prescaler. A change of `Bit` goes there, with its test in
+  `test/BitTest.cpp`.
