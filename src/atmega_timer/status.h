@@ -82,15 +82,21 @@ class Status {
 
   /*!
    * \brief Whether the call failed for this reason.
-   * \param other the error to compare with
+   * \param status the status of the call
+   * \param error the error to compare with
    */
-  constexpr bool operator==(Error other) const { return error_ == other; }
+  friend constexpr bool operator==(Status status, Error error) {
+    return status.error_ == error;
+  }
 
   /*!
    * \brief Whether the call did not fail for this reason.
-   * \param other the error to compare with
+   * \param status the status of the call
+   * \param error the error to compare with
    */
-  constexpr bool operator!=(Error other) const { return error_ != other; }
+  friend constexpr bool operator!=(Status status, Error error) {
+    return !(status == error);
+  }
 
  private:
   // A sketch reaches the error only through this class, so that it could carry
@@ -145,11 +151,23 @@ class Result {
   /*! \brief Whether there is a value. */
   constexpr bool IsOk() const { return error_ == Error::kOk; }
 
-  /*! \copydoc Status::operator==(Error) const */
-  constexpr bool operator==(Error other) const { return error_ == other; }
+  /*!
+   * \brief Whether the call failed for this reason.
+   * \param result the result of the call
+   * \param error the error to compare with
+   */
+  friend constexpr bool operator==(Result const& result, Error error) {
+    return result.error_ == error;
+  }
 
-  /*! \copydoc Status::operator!=(Error) const */
-  constexpr bool operator!=(Error other) const { return error_ != other; }
+  /*!
+   * \brief Whether the call did not fail for this reason.
+   * \param result the result of the call
+   * \param error the error to compare with
+   */
+  friend constexpr bool operator!=(Result const& result, Error error) {
+    return !(result == error);
+  }
 
  private:
   // Side by side rather than in a union: a value and its error still return in
