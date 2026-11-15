@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <util/atomic.h>
 
+#include "atmega_timer/Bit.h"
 #include "atmega_timer/attributes.h"
 #include "atmega_timer/status.h"
 
@@ -344,7 +345,8 @@ class Core {
          select <= static_cast<uint8_t>(Traits::kClockSelectLargest);
          ++select) {
       ClockSelect const candidate{static_cast<ClockSelect>(select)};
-      uint32_t const steps{clocks >> Traits::ShiftOf(candidate)};
+      uint32_t const steps{
+          Bit<uint32_t>::ShiftDown(clocks, Traits::ShiftOf(candidate))};
       if (steps <= Derived::kStepsMax) {
         return candidate;
       }
@@ -380,12 +382,12 @@ class Core {
 
   template <typename Register>
   static void SetBit(Register& reg, uint8_t bit) {
-    reg = static_cast<uint8_t>(static_cast<unsigned>(reg) | (1u << bit));
+    Bit<uint8_t>::SetBits(reg, Bit<uint8_t>::ToMask(bit));
   }
 
   template <typename Register>
   static void ClearBit(Register& reg, uint8_t bit) {
-    reg = static_cast<uint8_t>(static_cast<unsigned>(reg) & ~(1u << bit));
+    Bit<uint8_t>::ClearBits(reg, Bit<uint8_t>::ToMask(bit));
   }
   /*! \endcond */
 
@@ -454,15 +456,13 @@ class Core {
   // interrupt would call the callback at once rather than after a period. A
   // flag is cleared by writing 1 to it, and only it: no read first.
   static void EnableInterrupt() {
-    Traits::Tifr() = static_cast<uint8_t>(1u << Mode::kFlagBit);
+    Traits::Tifr() = Bit<uint8_t>::ToMask(Mode::kFlagBit);
     SetBit(Traits::Timsk(), Mode::kInterruptBit);
   }
 
   static void SelectClock(ClockSelect clock_select) {
-    Traits::Tccrb() =
-        static_cast<uint8_t>((static_cast<unsigned>(Traits::Tccrb()) &
-                              ~static_cast<unsigned>(kClockSelectMask)) |
-                             static_cast<unsigned>(clock_select));
+    Bit<uint8_t>::WriteBitGroup(Traits::Tccrb(), kClockSelectMask,
+                                static_cast<uint8_t>(clock_select));
   }
 
   // volatile, as the interrupt reads it: the store must not move past the

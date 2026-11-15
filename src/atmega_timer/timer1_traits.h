@@ -16,6 +16,7 @@
 #include <avr/io.h>
 #include <stdint.h>
 
+#include "atmega_timer/Bit.h"
 #include "atmega_timer/core.h"
 
 namespace atmega_timer {
@@ -70,7 +71,7 @@ struct Timer1Traits {
     /*! \brief TCCR1A in mode 8: no bit of the mode. */
     static constexpr uint8_t kModeTccra{0u};
     /*! \brief TCCR1B in mode 8: WGM13, and no clock. */
-    static constexpr uint8_t kModeTccrb{1u << WGM13};
+    static constexpr uint8_t kModeTccrb{Bit<uint8_t>::ToMask(WGM13)};
     /*! \brief Whether the hardware buffers the top: ICR1 is not: written below
      * the counter, it lets the counter run on to 65535. */
     static constexpr bool kTopIsBuffered{false};
@@ -89,7 +90,8 @@ struct Timer1Traits {
     /*! \brief TCCR1A in mode 12: no bit of the mode. */
     static constexpr uint8_t kModeTccra{0u};
     /*! \brief TCCR1B in mode 12: WGM13 and WGM12, and no clock. */
-    static constexpr uint8_t kModeTccrb{(1u << WGM13) | (1u << WGM12)};
+    static constexpr uint8_t kModeTccrb{Bit<uint8_t>::Combine(
+        Bit<uint8_t>::ToMask(WGM13), Bit<uint8_t>::ToMask(WGM12))};
     /*! \brief Whether the hardware buffers the top: ICR1 is not. */
     static constexpr bool kTopIsBuffered{false};
     /*! \brief The bit of TIMSK1 that enables the input capture interrupt. */

@@ -16,6 +16,7 @@
 #include <avr/io.h>
 #include <stdint.h>
 
+#include "atmega_timer/Bit.h"
 #include "atmega_timer/core.h"
 
 namespace atmega_timer {
@@ -72,9 +73,9 @@ struct Timer2Traits {
    */
   struct PhaseCorrectPwmMode {
     /*! \brief TCCR2A in mode 5: WGM20. */
-    static constexpr uint8_t kModeTccra{1u << WGM20};
+    static constexpr uint8_t kModeTccra{Bit<uint8_t>::ToMask(WGM20)};
     /*! \brief TCCR2B in mode 5: WGM22, and no clock. */
-    static constexpr uint8_t kModeTccrb{1u << WGM22};
+    static constexpr uint8_t kModeTccrb{Bit<uint8_t>::ToMask(WGM22)};
     /*! \brief Whether the hardware buffers the top: OCR2A is, and taken at the
      * top in mode 5. */
     static constexpr bool kTopIsBuffered{true};
@@ -91,7 +92,7 @@ struct Timer2Traits {
   /*! \brief Timer/Counter2 in CTC, mode 2, for Ctc. */
   struct CtcMode {
     /*! \brief TCCR2A in mode 2: WGM21. */
-    static constexpr uint8_t kModeTccra{1u << WGM21};
+    static constexpr uint8_t kModeTccra{Bit<uint8_t>::ToMask(WGM21)};
     /*! \brief TCCR2B in mode 2: no bit of the mode, and no clock. */
     static constexpr uint8_t kModeTccrb{0u};
     /*! \brief Whether the hardware buffers the top: OCR2A is not in CTC:

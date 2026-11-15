@@ -13,6 +13,7 @@
 #include <array>
 #include <string>
 
+#include "atmega_timer/Bit.h"
 #include "atmega_timer/ctc.h"
 #include "atmega_timer/phase_correct_pwm.h"
 #include "atmega_timer/status.h"
@@ -38,7 +39,7 @@ constexpr uint64_t kLongestPeriodInClocks{uint64_t{2} * 256 * 1024};
 uint64_t Prescaler() {
   constexpr std::array<uint64_t, 8> kPrescalers{0,  1,   8,   32,
                                                 64, 128, 256, 1024};
-  return kPrescalers.at(TCCR2B & 0x07u);
+  return kPrescalers.at(Bit<uint8_t>::ReadBitGroup(TCCR2B, 0x07u));
 }
 
 // The period OCR2A and TCCR2B make, in clocks.
@@ -122,7 +123,7 @@ constexpr uint64_t kLongestPeriodOfTimer1InClocks{uint64_t{2} * 65536 * 1024};
 // The prescaler TCCR1B selects, 0 while the timer does not run.
 uint64_t PrescalerOfTimer1() {
   constexpr std::array<uint64_t, 6> kPrescalers{0, 1, 8, 64, 256, 1024};
-  return kPrescalers.at(TCCR1B & 0x07u);
+  return kPrescalers.at(Bit<uint8_t>::ReadBitGroup(TCCR1B, 0x07u));
 }
 
 // The period ICR1 and TCCR1B make, in clocks.
