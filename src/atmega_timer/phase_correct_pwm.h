@@ -17,6 +17,7 @@
 #include <Arduino.h>
 #include <stdint.h>
 
+#include "atmega_timer/Bit.h"
 #include "atmega_timer/Utility/array.h"
 #include "atmega_timer/attributes.h"
 #include "atmega_timer/core.h"
@@ -42,7 +43,7 @@ constexpr uint32_t kDutyRounding{kDutyMax / 2u};
 // 1000 does not fit 32; only the compiler computes it.
 template <typename Counter>
 constexpr uint64_t LongestPeriodInClocks(uint8_t shift_largest) {
-  return (uint64_t{CounterValues<Counter>()} << shift_largest) * 2u;
+  return Bit<uint64_t>::ShiftUp(CounterValues<Counter>(), shift_largest) * 2u;
 }
 /*! \endcond */
 
@@ -171,7 +172,8 @@ class PhaseCorrectPwm
       steps = (2u * top) - steps;
     }
     // The time is below kPeriodMax, which TimeType holds.
-    uint32_t const clocks{steps << Traits::ShiftOf(this->clock_select())};
+    uint32_t const clocks{
+        Bit<uint32_t>::ShiftUp(steps, Traits::ShiftOf(this->clock_select()))};
     return static_cast<TimeType>(internal::MicrosecondsOf(clocks));
   }
 
@@ -201,7 +203,9 @@ class PhaseCorrectPwm
     if (clock_select == ClockSelect::kNoClock) {
       return 0u;
     }
-    return static_cast<Counter>(half >> Traits::ShiftOf(clock_select));
+    uint32_t const steps{
+        Bit<uint32_t>::ShiftDown(half, Traits::ShiftOf(clock_select))};
+    return static_cast<Counter>(steps);
   }
 
   // The compare value of a duty at the top, rounded: 0 is the bottom, which

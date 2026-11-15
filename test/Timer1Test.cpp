@@ -16,6 +16,7 @@
 #include <string>
 
 #include "Arduino.h"
+#include "atmega_timer/Bit.h"
 #include "atmega_timer/core.h"
 #include "atmega_timer/phase_correct_pwm.h"
 #include "atmega_timer/status.h"
@@ -34,11 +35,11 @@ int overflow_calls{0};
 void CountOverflow() { ++overflow_calls; }
 
 bool BitIsSet(uint8_t reg, unsigned bit) {
-  return ((static_cast<unsigned>(reg) >> bit) & 1u) != 0;
+  return Bit<uint8_t>::ReadBit(reg, static_cast<uint8_t>(bit));
 }
 
 uint8_t ClockSelect() {
-  return static_cast<uint8_t>(TCCR1B & kClockSelectMask);
+  return Bit<uint8_t>::ReadBitGroup(TCCR1B, kClockSelectMask);
 }
 
 void ResetTimer1() {

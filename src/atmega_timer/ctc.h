@@ -17,6 +17,7 @@
 #include <Arduino.h>
 #include <stdint.h>
 
+#include "atmega_timer/Bit.h"
 #include "atmega_timer/attributes.h"
 #include "atmega_timer/core.h"
 #include "atmega_timer/status.h"
@@ -31,7 +32,7 @@ namespace internal {
 // 1000 does not fit 32; only the compiler computes it.
 template <typename Counter>
 constexpr uint64_t LongestCtcPeriodInClocks(uint8_t shift_largest) {
-  return uint64_t{CounterValues<Counter>()} << shift_largest;
+  return Bit<uint64_t>::ShiftUp(CounterValues<Counter>(), shift_largest);
 }
 /*! \endcond */
 
@@ -127,7 +128,8 @@ class Ctc
     }
     uint32_t const steps{Base::Load(Traits::Tcnt())};
     // The time is below kPeriodMax, which TimeType holds.
-    uint32_t const clocks{steps << Traits::ShiftOf(this->clock_select())};
+    uint32_t const clocks{
+        Bit<uint32_t>::ShiftUp(steps, Traits::ShiftOf(this->clock_select()))};
     return static_cast<TimeType>(internal::MicrosecondsOf(clocks));
   }
 
@@ -173,7 +175,8 @@ class Ctc
     if (clock_select == ClockSelect::kNoClock) {
       return 0u;
     }
-    uint32_t const steps{clocks >> Traits::ShiftOf(clock_select)};
+    uint32_t const steps{
+        Bit<uint32_t>::ShiftDown(clocks, Traits::ShiftOf(clock_select))};
     // No step at all: a period of 0, or of 1 us below 1 MHz.
     if (steps == 0u) {
       return 0u;
