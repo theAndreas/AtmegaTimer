@@ -53,8 +53,8 @@ namespace atmega_timer {
  * at SetBits().
  *
  * \tparam Integer The unsigned integer, as `uint8_t` or `uint16_t`; not `bool`.
- * \pre Each `position` lies below the width of `Integer`; a shift by as much is
- *      undefined.
+ * \pre Each `position` and `count` lies below the width of `Integer`; a shift
+ *      by as much is undefined.
  */
 template <typename Integer>
 class Bit {
@@ -298,6 +298,30 @@ class Bit {
   }
 
   /*!
+   * \brief Returns `value` shifted up by `count` bits, which multiplies it by 2
+   *        to the `count`; the bits shifted past the top are dropped.
+   *
+   * \param[in] value The integer to shift.
+   * \param[in] count The number of bits to shift by.
+   * \return The shifted integer.
+   */
+  static constexpr Integer ShiftUp(Integer value, uint8_t count) {
+    return static_cast<Integer>(static_cast<ShiftType>(value) << count);
+  }
+
+  /*!
+   * \brief Returns `value` shifted down by `count` bits, which divides it by 2
+   *        to the `count`, rounded down.
+   *
+   * \param[in] value The integer to shift.
+   * \param[in] count The number of bits to shift by.
+   * \return The shifted integer.
+   */
+  static constexpr Integer ShiftDown(Integer value, uint8_t count) {
+    return static_cast<Integer>(static_cast<ShiftType>(value) >> count);
+  }
+
+  /*!
    * \brief Sets the bits of `mask` in `target`, the other bits left as they
    *        were.
    *
@@ -358,10 +382,6 @@ class Bit {
   // ~ of an Integer narrower than int is a negative int, so cast back.
   static constexpr Integer Invert(Integer mask) {
     return static_cast<Integer>(~mask);
-  }
-
-  static constexpr Integer ShiftDown(Integer value, uint8_t position) {
-    return static_cast<Integer>(static_cast<ShiftType>(value) >> position);
   }
 
   Integer value_{0u};

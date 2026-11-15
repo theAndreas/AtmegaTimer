@@ -36,6 +36,8 @@ static_assert(Bit<uint8_t>::WriteBit(0x00, 3, true) == 0x08);
 static_assert(Bit<uint8_t>::ReadBit(0x08, 3));
 static_assert(Bit<uint8_t>::ReadBitGroup(0x3C, 0x0F) == 0x0C);
 static_assert(Bit<uint8_t>::ReadBitGroup(0x3C, 0x03, 4) == 0x03);
+static_assert(Bit<uint64_t>::ShiftUp(0xFFFFu, 10) == 0x3FFFC00u);
+static_assert(Bit<uint32_t>::ShiftDown(0x3FFFC00uL, 10) == 0xFFFFu);
 
 TEST(BitTest, StartsWithEveryBitCleared) {
   Bit<uint16_t> const bits;
@@ -215,6 +217,23 @@ TEST(BitTest, ReadsTheHighestGroupShiftedDown) {
   EXPECT_EQ(Bit<uint8_t>::ReadBitGroup(0xC0, 0x03, 6), 0x03);
   EXPECT_EQ(Bit<uint16_t>::ReadBitGroup(0xF000, 0x0F, 12), 0x0F);
   EXPECT_EQ(Bit<uint8_t>::ReadBitGroup(0x80, 0x01, 7), 0x01);
+}
+
+TEST(BitTest, ShiftsAValueUp) {
+  EXPECT_EQ(Bit<uint32_t>::ShiftUp(0x0000FFFFuL, 10), 0x03FFFC00uL);
+  EXPECT_EQ(Bit<uint32_t>::ShiftUp(0x12345678uL, 0), 0x12345678uL);
+}
+
+TEST(BitTest, DropsTheBitsShiftedUpPastTheTop) {
+  // A uint8_t shifted as it is would become an int and keep them.
+  EXPECT_EQ(Bit<uint8_t>::ShiftUp(0xFF, 4), 0xF0);
+  EXPECT_EQ(Bit<uint64_t>::ShiftUp(0xFFuLL, 60), 0xF000000000000000uLL);
+}
+
+TEST(BitTest, ShiftsAValueDown) {
+  EXPECT_EQ(Bit<uint32_t>::ShiftDown(0x03FFFC00uL, 10), 0x0000FFFFuL);
+  EXPECT_EQ(Bit<uint32_t>::ShiftDown(0x80000000uL, 31), 0x00000001uL);
+  EXPECT_EQ(Bit<uint8_t>::ShiftDown(0x81, 0), 0x81);
 }
 
 TEST(BitTest, SetsBitsOfATargetAndLeavesTheOthers) {
