@@ -37,7 +37,7 @@ void Check(atmega_timer::Status status, __FlashStringHelper const* call) {
 
 void setup() {
   Serial.begin(kBaudRate);
-  auto& timer = atmega_timer::timer1;
+  auto& timer{atmega_timer::timer1};
   Check(timer.Begin(kFastPeriod), F("Begin"));
   Check(timer.EnablePwm<Channel::kA>(kQuarter), F("EnablePwm A"));
   Check(timer.EnablePwm<Channel::kB>(kThreeQuarters), F("EnablePwm B"));

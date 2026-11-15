@@ -29,20 +29,20 @@ namespace atmega_timer {
  *        low. The same on every timer, so that a sketch moves to another one
  *        without changing its duties.
  */
-constexpr uint16_t kDutyMax{1023U};
+constexpr uint16_t kDutyMax{1023u};
 
 namespace internal {
 
 /*! \cond */
 // The duty is a share of kDutyMax of the top, rounded.
-constexpr uint32_t kDutyRounding{kDutyMax / 2U};
+constexpr uint32_t kDutyRounding{kDutyMax / 2u};
 
 // The clocks of the longest period: every value of the counter up and down,
 // at the largest prescaler. In 64 bits, as a 16-bit counter at 1024 times
 // 1000 does not fit 32; only the compiler computes it.
 template <typename Counter>
 constexpr uint64_t LongestPeriodInClocks(uint8_t shift_largest) {
-  return (uint64_t{CounterValues<Counter>()} << shift_largest) * 2U;
+  return (uint64_t{CounterValues<Counter>()} << shift_largest) * 2u;
 }
 /*! \endcond */
 
@@ -82,7 +82,7 @@ class PhaseCorrectPwm
       ((internal::LongestPeriodInClocks<typename Traits::Counter>(
             Traits::kShiftLargest) *
         internal::kMicrosecondsPerMillisecond) -
-       1U) /
+       1u) /
       internal::kClocksPerMillisecond)};
 
   /*!
@@ -168,7 +168,7 @@ class PhaseCorrectPwm
     // Counting down: up to the top, and back to where it is.
     if (next < steps) {
       uint32_t const top{Base::Load(Traits::Top())};
-      steps = (2U * top) - steps;
+      steps = (2u * top) - steps;
     }
     // The time is below kPeriodMax, which TimeType holds.
     uint32_t const clocks{steps << Traits::ShiftOf(this->clock_select())};
@@ -188,7 +188,7 @@ class PhaseCorrectPwm
 
   // The most steps of half a period, for Base: the top, the last value of the
   // counter.
-  static constexpr uint32_t kStepsMax{internal::CounterValues<Counter>() - 1U};
+  static constexpr uint32_t kStepsMax{internal::CounterValues<Counter>() - 1u};
 
   // The top for a period, and in clock_select the smallest prescaler that lets
   // it fit the counter; 0 for a period too short for one step, or too long.
@@ -196,10 +196,10 @@ class PhaseCorrectPwm
   // counted. Half of the clocks rounded down is half of the period's clocks
   // rounded down, as cutting the microseconds first cuts no whole half.
   static Counter TopOf(TimeType period, ClockSelect& clock_select) {
-    uint32_t const half{internal::PeriodInClocks(period) / 2U};
+    uint32_t const half{internal::PeriodInClocks(period) / 2u};
     clock_select = Base::SmallestClockSelectFor(half);
     if (clock_select == ClockSelect::kNoClock) {
-      return 0U;
+      return 0u;
     }
     return static_cast<Counter>(half >> Traits::ShiftOf(clock_select));
   }
@@ -213,7 +213,7 @@ class PhaseCorrectPwm
   }
 
   // The duty of each channel at the top, for Base when the period changes.
-  void ApplyChannels() { ApplyDuties(ChannelIndex<0U>{}); }
+  void ApplyChannels() { ApplyDuties(ChannelIndex<0u>{}); }
 
   // The duty of each channel at the top, from the one at Index on.
   template <uint8_t Index>
@@ -221,7 +221,7 @@ class PhaseCorrectPwm
     constexpr Channel kWhich{static_cast<Channel>(
         static_cast<uint8_t>(Mode::kFirstChannel) + Index)};
     CompareOutputOf<kWhich>::Compare() = CompareValue(duties_[Index]);
-    ApplyDuties(ChannelIndex<static_cast<uint8_t>(Index + 1U)>{});
+    ApplyDuties(ChannelIndex<static_cast<uint8_t>(Index + 1u)>{});
   }
 
   // Past the last channel: chosen over the template, as it is no template.

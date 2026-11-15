@@ -32,7 +32,7 @@ int match_calls{0};
 void CountMatch() { ++match_calls; }
 
 bool BitIsSet(uint8_t reg, unsigned bit) {
-  return ((static_cast<unsigned>(reg) >> bit) & 1U) != 0;
+  return ((static_cast<unsigned>(reg) >> bit) & 1u) != 0;
 }
 
 uint8_t ClockSelect() {
@@ -75,11 +75,11 @@ TEST_F(Timer1CtcTest, BeginSetsCtcWithICR1AsTheTop) {
 
 TEST_F(Timer1CtcTest, TheLongestPeriodIsAbout4Seconds) {
   // 65536 steps once at 16 MHz / 1024, half of phase correct PWM.
-  EXPECT_EQ(Timer1Ctc::kPeriodMax, 4194304U);
+  EXPECT_EQ(Timer1Ctc::kPeriodMax, 4194304u);
 }
 
 TEST_F(Timer1CtcTest, APeriodBeyondTheLongestIsRefused) {
-  EXPECT_EQ(timer().Begin(Timer1Ctc::kPeriodMax + 1U),
+  EXPECT_EQ(timer().Begin(Timer1Ctc::kPeriodMax + 1u),
             Error::kPeriodOutOfRange);
 
   EXPECT_EQ(timer().GetState(), State::kNotBegun);
@@ -114,17 +114,17 @@ TEST_P(Timer1CtcPeriodTest, SetsTheTopAndTheSmallestPrescaler) {
 
 INSTANTIATE_TEST_SUITE_P(
     EachPrescaler, Timer1CtcPeriodTest,
-    ::testing::Values(PeriodCase{"By1", 1000U, 15999U, 1},
-                      PeriodCase{"By8", 10000U, 19999U, 2},
-                      PeriodCase{"By64", 100000U, 24999U, 3},
-                      PeriodCase{"By256", 1000000U, 62499U, 4},
-                      PeriodCase{"By1024", 4194304U, 65535U, 5}),
+    ::testing::Values(PeriodCase{"By1", 1000u, 15999u, 1},
+                      PeriodCase{"By8", 10000u, 19999u, 2},
+                      PeriodCase{"By64", 100000u, 24999u, 3},
+                      PeriodCase{"By256", 1000000u, 62499u, 4},
+                      PeriodCase{"By1024", 4194304u, 65535u, 5}),
     [](::testing::TestParamInfo<PeriodCase> const& period_case) {
       return std::string{period_case.param.name};
     });
 
 TEST_F(Timer1CtcTest, EnableToggleOfChannelAToggles9AtTheBottom) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   OCR1A = 20000;
 
   EXPECT_EQ(timer().EnableToggle<Channel::kA>(), Error::kOk);
@@ -136,7 +136,7 @@ TEST_F(Timer1CtcTest, EnableToggleOfChannelAToggles9AtTheBottom) {
 }
 
 TEST_F(Timer1CtcTest, EnableToggleOfChannelBToggles10AtTheBottom) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   OCR1B = 20000;
 
   EXPECT_EQ(timer().EnableToggle<Channel::kB>(), Error::kOk);
@@ -149,7 +149,7 @@ TEST_F(Timer1CtcTest, EnableToggleOfChannelBToggles10AtTheBottom) {
 
 // In mode 12 the input capture flag marks the match at ICR1.
 TEST_F(Timer1CtcTest, StartEnablesTheInputCaptureInterrupt) {
-  ASSERT_EQ(timer().Begin(1000U, CountMatch), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u, CountMatch), Error::kOk);
 
   ASSERT_EQ(timer().Start(), Error::kOk);
 
@@ -161,10 +161,10 @@ TEST_F(Timer1CtcTest, StartEnablesTheInputCaptureInterrupt) {
 // ICR1 is not buffered: while the counter runs, a new period waits for the
 // match.
 TEST_F(Timer1CtcTest, SetPeriodWhileRunningKeepsThePeriodUntilTheMatch) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
 
-  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(10000u), Error::kOk);
 
   EXPECT_EQ(ICR1, 15999);
   EXPECT_EQ(ClockSelect(), 1);
@@ -172,9 +172,9 @@ TEST_F(Timer1CtcTest, SetPeriodWhileRunningKeepsThePeriodUntilTheMatch) {
 }
 
 TEST_F(Timer1CtcTest, TheMatchTakesTheNewPeriod) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
-  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(10000u), Error::kOk);
 
   timer().OnInterrupt();
 
@@ -185,18 +185,18 @@ TEST_F(Timer1CtcTest, TheMatchTakesTheNewPeriod) {
 
 // At 100 ms the prescaler is 64: a step of the counter is 4 us.
 TEST_F(Timer1CtcTest, ReadCountsTheStepsSinceZero) {
-  ASSERT_EQ(timer().Begin(100000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(100000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   TCNT1.Set(10000, true);
 
   Result<TimeType> const result{timer().Read()};
 
   ASSERT_TRUE(result.IsOk());
-  EXPECT_EQ(result.GetValue(), 40000U);
+  EXPECT_EQ(result.GetValue(), 40000u);
 }
 
 TEST_F(Timer1CtcTest, TheInputCaptureInterruptCallsTheCallbackOfTimer1Ctc) {
-  ASSERT_EQ(timer1_ctc.Begin(1000U, CountMatch), Error::kOk);
+  ASSERT_EQ(timer1_ctc.Begin(1000u, CountMatch), Error::kOk);
   ASSERT_EQ(timer1_ctc.Start(), Error::kOk);
 
   TIMER1_CAPT_vect();

@@ -48,15 +48,15 @@ namespace internal {
 
 /*! \cond */
 // The clock select bits CSx2..CSx0, at the same place on every Timer/Counter.
-constexpr uint8_t kClockSelectMask{0x07U};
+constexpr uint8_t kClockSelectMask{0x07u};
 
-constexpr uint32_t kClocksPerMillisecond{F_CPU / 1000UL};
-constexpr uint32_t kMicrosecondsPerMillisecond{1000U};
+constexpr uint32_t kClocksPerMillisecond{F_CPU / 1000uL};
+constexpr uint32_t kMicrosecondsPerMillisecond{1000u};
 
 // The number of values of a counter: 256 of 8 bits, 65536 of 16.
 template <typename Counter>
 constexpr uint32_t CounterValues() {
-  return static_cast<uint32_t>(static_cast<Counter>(-1)) + 1U;
+  return static_cast<uint32_t>(static_cast<Counter>(-1)) + 1u;
 }
 
 // The microseconds of clocks, rounded down. Its whole milliseconds and the
@@ -125,7 +125,7 @@ class Core {
   using TimeType = typename Traits::TimeType;
 
   /*! \brief The period Begin() sets if none is given: 1 ms. */
-  static constexpr TimeType kDefaultPeriod{1000U};
+  static constexpr TimeType kDefaultPeriod{1000u};
 
   /*!
    * \brief Sets the timer up in its mode, with a period and a callback; it does
@@ -141,7 +141,7 @@ class Core {
     if (state_ != State::kNotBegun) {
       return Error::kBegunAlready;
     }
-    if ((period > Derived::kPeriodMax) || (top == 0U)) {
+    if ((period > Derived::kPeriodMax) || (top == 0u)) {
       return Error::kPeriodOutOfRange;
     }
     // No clock and no output yet.
@@ -176,7 +176,7 @@ class Core {
       return Error::kNotBegun;
     }
     // A top of 0 would stop the counter at 0.
-    if ((period > Derived::kPeriodMax) || (top == 0U)) {
+    if ((period > Derived::kPeriodMax) || (top == 0u)) {
       return Error::kPeriodOutOfRange;
     }
     if (WaitsForTheBottom()) {
@@ -202,12 +202,12 @@ class Core {
     if (PeriodWaits()) {
       TakeWaitingPeriod();
     }
-    Traits::Tcnt() = 0U;
+    Traits::Tcnt() = 0u;
     SelectClock(clock_select_);
     if (callback_ != nullptr) {
       // Off the bottom first, as version 1 did; one step takes at most 1024
       // clocks, 64 us at 16 MHz.
-      while (Traits::Tcnt() == 0U) {
+      while (Traits::Tcnt() == 0u) {
       }
       EnableInterrupt();
     }
@@ -353,7 +353,7 @@ class Core {
   }
 
   // A register of a byte is read and written in one access.
-  static constexpr bool kOneAccess{sizeof(Counter) == 1U};
+  static constexpr bool kOneAccess{sizeof(Counter) == 1u};
 
   // A register of the counter's width, read or written so that the interrupt
   // does not come between its two bytes: the AVR passes the high byte of a
@@ -364,7 +364,7 @@ class Core {
     if (kOneAccess) {
       return reg;
     }
-    Counter value{0U};
+    Counter value{0u};
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE) { value = reg; }
     return value;
   }
@@ -380,12 +380,12 @@ class Core {
 
   template <typename Register>
   static void SetBit(Register& reg, uint8_t bit) {
-    reg = static_cast<uint8_t>(static_cast<unsigned>(reg) | (1U << bit));
+    reg = static_cast<uint8_t>(static_cast<unsigned>(reg) | (1u << bit));
   }
 
   template <typename Register>
   static void ClearBit(Register& reg, uint8_t bit) {
-    reg = static_cast<uint8_t>(static_cast<unsigned>(reg) & ~(1U << bit));
+    reg = static_cast<uint8_t>(static_cast<unsigned>(reg) & ~(1u << bit));
   }
   /*! \endcond */
 
@@ -454,7 +454,7 @@ class Core {
   // interrupt would call the callback at once rather than after a period. A
   // flag is cleared by writing 1 to it, and only it: no read first.
   static void EnableInterrupt() {
-    Traits::Tifr() = static_cast<uint8_t>(1U << Mode::kFlagBit);
+    Traits::Tifr() = static_cast<uint8_t>(1u << Mode::kFlagBit);
     SetBit(Traits::Timsk(), Mode::kInterruptBit);
   }
 
@@ -470,7 +470,7 @@ class Core {
   Callback volatile callback_{nullptr};
   State state_{State::kNotBegun};
   ClockSelect clock_select_{ClockSelect::kNoClock};
-  Counter top_{0U};
+  Counter top_{0u};
   // The period that waits for the bottom, which the interrupt takes: top_ and
   // waiting_clock_select_. Written with the interrupt off.
   ClockSelect waiting_clock_select_{ClockSelect::kNoClock};

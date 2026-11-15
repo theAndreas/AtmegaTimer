@@ -38,7 +38,7 @@ struct Timer2Traits {
    * \brief A time in microseconds: 32 bits below 8 MHz, where the longest
    *        period does not fit into 16.
    */
-#if F_CPU < 8000000UL
+#if F_CPU < 8000000uL
   using TimeType = uint32_t;
 #else
   using TimeType = uint16_t;
@@ -59,7 +59,7 @@ struct Timer2Traits {
   /*! \brief The largest prescaler. */
   static constexpr ClockSelect kClockSelectLargest{ClockSelect::kDivide1024};
   /*! \brief The largest prescaler as a shift: 1024 is 2^10. */
-  static constexpr uint8_t kShiftLargest{10U};
+  static constexpr uint8_t kShiftLargest{10u};
 
   /*!
    * \brief Returns the prescaler of `clock_select` as a shift, 0 for none.
@@ -72,9 +72,9 @@ struct Timer2Traits {
    */
   struct PhaseCorrectPwmMode {
     /*! \brief TCCR2A in mode 5: WGM20. */
-    static constexpr uint8_t kModeTccra{1U << WGM20};
+    static constexpr uint8_t kModeTccra{1u << WGM20};
     /*! \brief TCCR2B in mode 5: WGM22, and no clock. */
-    static constexpr uint8_t kModeTccrb{1U << WGM22};
+    static constexpr uint8_t kModeTccrb{1u << WGM22};
     /*! \brief Whether the hardware buffers the top: OCR2A is, and taken at the
      * top in mode 5. */
     static constexpr bool kTopIsBuffered{true};
@@ -85,15 +85,15 @@ struct Timer2Traits {
     /*! \brief The first channel that gives a PWM: B, as OCR2A is the top. */
     static constexpr Channel kFirstChannel{Channel::kB};
     /*! \brief The number of channels that give a PWM: B alone. */
-    static constexpr uint8_t kChannelCount{1U};
+    static constexpr uint8_t kChannelCount{1u};
   };
 
   /*! \brief Timer/Counter2 in CTC, mode 2, for Ctc. */
   struct CtcMode {
     /*! \brief TCCR2A in mode 2: WGM21. */
-    static constexpr uint8_t kModeTccra{1U << WGM21};
+    static constexpr uint8_t kModeTccra{1u << WGM21};
     /*! \brief TCCR2B in mode 2: no bit of the mode, and no clock. */
-    static constexpr uint8_t kModeTccrb{0U};
+    static constexpr uint8_t kModeTccrb{0u};
     /*! \brief Whether the hardware buffers the top: OCR2A is not in CTC:
      * written below the counter, it lets the counter run on to 255. */
     static constexpr bool kTopIsBuffered{false};
@@ -104,7 +104,7 @@ struct Timer2Traits {
     /*! \brief The first channel that toggles: A, at the top. */
     static constexpr Channel kFirstChannel{Channel::kA};
     /*! \brief The number of channels that toggle: A and B. */
-    static constexpr uint8_t kChannelCount{2U};
+    static constexpr uint8_t kChannelCount{2u};
     /*! \brief The first channel whose compare value is its own: B, as OCR2A is
      * the top. */
     static constexpr Channel kFirstOwnCompare{Channel::kB};

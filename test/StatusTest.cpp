@@ -58,7 +58,7 @@ TEST(ResultTest, HoldsAValue) {
   Result<uint16_t> const result{uint16_t{42}};
 
   EXPECT_TRUE(result.IsOk());
-  EXPECT_EQ(result.GetValue(), 42U);
+  EXPECT_EQ(result.GetValue(), 42u);
   EXPECT_EQ(result.GetError(), Error::kOk);
 }
 
@@ -66,7 +66,7 @@ TEST(ResultTest, HoldsAnErrorAndAValueOfZero) {
   Result<uint16_t> const result{Error::kNotRunning};
 
   EXPECT_FALSE(result.IsOk());
-  EXPECT_EQ(result.GetValue(), 0U);
+  EXPECT_EQ(result.GetValue(), 0u);
   EXPECT_TRUE(result == Error::kNotRunning);
   EXPECT_TRUE(result != Error::kOk);
   EXPECT_EQ(std::string{reinterpret_cast<char const*>(result.GetErrorText())},
