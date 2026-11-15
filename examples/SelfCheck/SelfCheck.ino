@@ -129,7 +129,7 @@ void CheckCallbacks(Timer& timer, __FlashStringHelper const* name) {
 template <typename Timer>
 void CheckNewPeriod(Timer& timer, __FlashStringHelper const* name) {
   Expect(timer.Start(), name, F("Start()"));
-  Wait(kWindow / 4U);
+  Wait(kWindow / 4u);
   Expect(timer.SetPeriod(kShorterPeriod), name, F("SetPeriod()"));
   Wait(kSettle);
   ResetCalls();

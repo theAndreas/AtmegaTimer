@@ -34,7 +34,7 @@ int match_calls{0};
 void CountMatch() { ++match_calls; }
 
 bool BitIsSet(uint8_t reg, unsigned bit) {
-  return ((static_cast<unsigned>(reg) >> bit) & 1U) != 0;
+  return ((static_cast<unsigned>(reg) >> bit) & 1u) != 0;
 }
 
 uint8_t ClockSelect() {
@@ -76,7 +76,7 @@ TEST_F(CtcTest, BeginSetsCtcWithoutAClock) {
 
 TEST_F(CtcTest, TheLongestPeriodIsAbout16Milliseconds) {
   // 256 steps once at 16 MHz / 1024, half of phase correct PWM.
-  EXPECT_EQ(Timer::kPeriodMax, 16384U);
+  EXPECT_EQ(Timer::kPeriodMax, 16384u);
 }
 
 TEST_F(CtcTest, TheLongestPeriodCountsEveryValueOfTheCounter) {
@@ -89,7 +89,7 @@ TEST_F(CtcTest, TheLongestPeriodCountsEveryValueOfTheCounter) {
 }
 
 TEST_F(CtcTest, APeriodBeyondTheLongestIsRefused) {
-  EXPECT_EQ(timer().Begin(static_cast<TimeType>(Timer::kPeriodMax + 1U)),
+  EXPECT_EQ(timer().Begin(static_cast<TimeType>(Timer::kPeriodMax + 1u)),
             Error::kPeriodOutOfRange);
 
   EXPECT_EQ(timer().GetState(), State::kNotBegun);
@@ -97,15 +97,15 @@ TEST_F(CtcTest, APeriodBeyondTheLongestIsRefused) {
 
 // Far beyond, no prescaler lets the period fit the counter.
 TEST_F(CtcTest, APeriodBeyondEveryPrescalerIsRefused) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
-  EXPECT_EQ(timer().SetPeriod(65535U), Error::kPeriodOutOfRange);
+  EXPECT_EQ(timer().SetPeriod(65535u), Error::kPeriodOutOfRange);
 
   EXPECT_EQ(OCR2A, 249);
 }
 
 TEST_F(CtcTest, APeriodOfZeroIsRefused) {
-  EXPECT_EQ(timer().Begin(0U), Error::kPeriodOutOfRange);
+  EXPECT_EQ(timer().Begin(0u), Error::kPeriodOutOfRange);
 
   EXPECT_EQ(timer().GetState(), State::kNotBegun);
 }
@@ -139,20 +139,20 @@ TEST_P(CtcPeriodTest, SetsTheTopAndTheSmallestPrescaler) {
 
 INSTANTIATE_TEST_SUITE_P(
     EachPrescaler, CtcPeriodTest,
-    ::testing::Values(PeriodCase{"By1", 10U, 159, 1},
-                      PeriodCase{"By1AtItsLongest", 16U, 255, 1},
-                      PeriodCase{"By8", 17U, 33, 2},
-                      PeriodCase{"By32", 500U, 249, 3},
-                      PeriodCase{"By64", 1000U, 249, 4},
-                      PeriodCase{"By128", 2000U, 249, 5},
-                      PeriodCase{"By256", 4000U, 249, 6},
-                      PeriodCase{"By1024", 10000U, 155, 7}),
+    ::testing::Values(PeriodCase{"By1", 10u, 159, 1},
+                      PeriodCase{"By1AtItsLongest", 16u, 255, 1},
+                      PeriodCase{"By8", 17u, 33, 2},
+                      PeriodCase{"By32", 500u, 249, 3},
+                      PeriodCase{"By64", 1000u, 249, 4},
+                      PeriodCase{"By128", 2000u, 249, 5},
+                      PeriodCase{"By256", 4000u, 249, 6},
+                      PeriodCase{"By1024", 10000u, 155, 7}),
     [](::testing::TestParamInfo<PeriodCase> const& period_case) {
       return std::string{period_case.param.name};
     });
 
 TEST_F(CtcTest, EnableToggleOfChannelBToggles3AtTheBottom) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   OCR2B = 200;
 
   EXPECT_EQ(timer().EnableToggle<Channel::kB>(), Error::kOk);
@@ -165,7 +165,7 @@ TEST_F(CtcTest, EnableToggleOfChannelBToggles3AtTheBottom) {
 }
 
 TEST_F(CtcTest, EnableToggleOfChannelAToggles11AtTheTop) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
   EXPECT_EQ(timer().EnableToggle<Channel::kA>(), Error::kOk);
 
@@ -187,17 +187,17 @@ TEST_F(CtcTest, EnableToggleIsRefusedBeforeBegin) {
 }
 
 TEST_F(CtcTest, SetPeriodLeavesTheToggleAtTheBottom) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().EnableToggle<Channel::kB>(), Error::kOk);
 
-  ASSERT_EQ(timer().SetPeriod(100U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(100u), Error::kOk);
 
   EXPECT_EQ(OCR2A, 199);
   EXPECT_EQ(OCR2B, 0);
 }
 
 TEST_F(CtcTest, DisableToggleLeavesTheOtherChannel) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().EnableToggle<Channel::kA>(), Error::kOk);
   ASSERT_EQ(timer().EnableToggle<Channel::kB>(), Error::kOk);
 
@@ -208,7 +208,7 @@ TEST_F(CtcTest, DisableToggleLeavesTheOtherChannel) {
 }
 
 TEST_F(CtcTest, StartEnablesTheInterruptOfTheMatch) {
-  ASSERT_EQ(timer().Begin(1000U, CountMatch), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u, CountMatch), Error::kOk);
 
   ASSERT_EQ(timer().Start(), Error::kOk);
 
@@ -219,7 +219,7 @@ TEST_F(CtcTest, StartEnablesTheInterruptOfTheMatch) {
 }
 
 TEST_F(CtcTest, TheMatchCallsTheCallback) {
-  ASSERT_EQ(timer().Begin(1000U, CountMatch), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u, CountMatch), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
 
   timer().OnInterrupt();
@@ -230,10 +230,10 @@ TEST_F(CtcTest, TheMatchCallsTheCallback) {
 // OCR2A is not buffered in CTC: a top written below the counter would let it
 // run on to 255. While it counts, a new period waits for the match.
 TEST_F(CtcTest, SetPeriodWhileRunningKeepsThePeriodUntilTheMatch) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
 
-  EXPECT_EQ(timer().SetPeriod(100U), Error::kOk);
+  EXPECT_EQ(timer().SetPeriod(100u), Error::kOk);
 
   EXPECT_EQ(OCR2A, 249);
   EXPECT_EQ(ClockSelect(), 4);
@@ -241,9 +241,9 @@ TEST_F(CtcTest, SetPeriodWhileRunningKeepsThePeriodUntilTheMatch) {
 }
 
 TEST_F(CtcTest, TheMatchTakesTheNewPeriod) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
-  ASSERT_EQ(timer().SetPeriod(100U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(100u), Error::kOk);
 
   timer().OnInterrupt();
 
@@ -254,7 +254,7 @@ TEST_F(CtcTest, TheMatchTakesTheNewPeriod) {
 }
 
 TEST_F(CtcTest, ReadIsRefusedUnlessRunning) {
-  ASSERT_EQ(timer().Begin(100U), Error::kOk);
+  ASSERT_EQ(timer().Begin(100u), Error::kOk);
 
   Result<TimeType> const result{timer().Read()};
 
@@ -263,20 +263,20 @@ TEST_F(CtcTest, ReadIsRefusedUnlessRunning) {
 
 // At 100 us the prescaler is 8: a step of the counter is 0.5 us.
 TEST_F(CtcTest, ReadCountsTheStepsSinceZero) {
-  ASSERT_EQ(timer().Begin(100U), Error::kOk);
+  ASSERT_EQ(timer().Begin(100u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   TCNT2.Set(50, true);
 
   Result<TimeType> const result{timer().Read()};
 
   ASSERT_TRUE(result.IsOk());
-  EXPECT_EQ(result.GetValue(), 25U);
+  EXPECT_EQ(result.GetValue(), 25u);
 }
 
 // The counter only counts up: one read, without waiting for a step to see
 // which way it goes.
 TEST_F(CtcTest, ReadTakesTheCounterAsItStands) {
-  ASSERT_EQ(timer().Begin(100U), Error::kOk);
+  ASSERT_EQ(timer().Begin(100u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   TCNT2.Set(50, false);
   TCNT2.SetReadsPerStep(4);
@@ -284,7 +284,7 @@ TEST_F(CtcTest, ReadTakesTheCounterAsItStands) {
   Result<TimeType> const result{timer().Read()};
 
   ASSERT_TRUE(result.IsOk());
-  EXPECT_EQ(result.GetValue(), 25U);
+  EXPECT_EQ(result.GetValue(), 25u);
 }
 
 }  // namespace

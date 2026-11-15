@@ -22,7 +22,7 @@ void CountOverflow() { ++overflow_calls; }
 
 TEST(Timer2Test, TheOverflowInterruptCallsTheCallbackOfTimer2) {
   ASSERT_EQ(timer2.GetState(), State::kNotBegun);
-  ASSERT_EQ(timer2.Begin(1000U, CountOverflow), Error::kOk);
+  ASSERT_EQ(timer2.Begin(1000u, CountOverflow), Error::kOk);
   ASSERT_EQ(timer2.Start(), Error::kOk);
 
   TIMER2_OVF_vect();

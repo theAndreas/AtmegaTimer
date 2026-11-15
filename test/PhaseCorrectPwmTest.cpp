@@ -43,32 +43,32 @@ struct OtherTraits {
     kDivide256
   };
   static constexpr ClockSelect kClockSelectLargest{ClockSelect::kDivide256};
-  static constexpr uint8_t kShiftLargest{8U};
+  static constexpr uint8_t kShiftLargest{8u};
 
   static uint8_t ShiftOf(ClockSelect clock_select) {
     switch (clock_select) {
       case ClockSelect::kDivide8:
-        return 3U;
+        return 3u;
       case ClockSelect::kDivide64:
-        return 6U;
+        return 6u;
       case ClockSelect::kDivide256:
         return kShiftLargest;
       case ClockSelect::kNoClock:
       case ClockSelect::kDivide1:
       default:
-        return 0U;
+        return 0u;
     }
   }
 
   struct PhaseCorrectPwmMode {
     // WGM21 alone.
-    static constexpr uint8_t kModeTccra{0x02U};
-    static constexpr uint8_t kModeTccrb{0U};
+    static constexpr uint8_t kModeTccra{0x02u};
+    static constexpr uint8_t kModeTccrb{0u};
     static constexpr bool kTopIsBuffered{true};
-    static constexpr uint8_t kInterruptBit{1U};
-    static constexpr uint8_t kFlagBit{2U};
+    static constexpr uint8_t kInterruptBit{1u};
+    static constexpr uint8_t kFlagBit{2u};
     static constexpr Channel kFirstChannel{Channel::kA};
-    static constexpr uint8_t kChannelCount{2U};
+    static constexpr uint8_t kChannelCount{2u};
   };
 
   template <Channel Which>
@@ -111,7 +111,7 @@ int overflow_calls{0};
 void CountOverflow() { ++overflow_calls; }
 
 bool BitIsSet(uint8_t reg, unsigned bit) {
-  return ((static_cast<unsigned>(reg) >> bit) & 1U) != 0;
+  return ((static_cast<unsigned>(reg) >> bit) & 1u) != 0;
 }
 
 uint8_t ClockSelect() {
@@ -163,14 +163,14 @@ TEST_F(PhaseCorrectPwmTest, BeginIsRefusedTheSecondTime) {
 
 TEST_F(PhaseCorrectPwmTest,
        BeginRefusesAPeriodAboveTheLongestAndStaysNotBegun) {
-  EXPECT_EQ(timer().Begin(static_cast<TimeType>(Timer2::kPeriodMax + 1U)),
+  EXPECT_EQ(timer().Begin(static_cast<TimeType>(Timer2::kPeriodMax + 1u)),
             Error::kPeriodOutOfRange);
 
   EXPECT_EQ(timer().GetState(), State::kNotBegun);
 }
 
 TEST_F(PhaseCorrectPwmTest, BeginRefusesAPeriodOfZeroAndStaysNotBegun) {
-  EXPECT_EQ(timer().Begin(0U, CountOverflow), Error::kPeriodOutOfRange);
+  EXPECT_EQ(timer().Begin(0u, CountOverflow), Error::kPeriodOutOfRange);
 
   EXPECT_EQ(timer().GetState(), State::kNotBegun);
   EXPECT_EQ(timer().GetCallback(), nullptr);
@@ -179,12 +179,12 @@ TEST_F(PhaseCorrectPwmTest, BeginRefusesAPeriodOfZeroAndStaysNotBegun) {
 
 TEST_F(PhaseCorrectPwmTest, TheLongestPeriodIsAbout33Milliseconds) {
   // 256 steps up and down at 16 MHz / 1024.
-  EXPECT_EQ(Timer2::kPeriodMax, 32767U);
+  EXPECT_EQ(Timer2::kPeriodMax, 32767u);
 }
 
 // The period is 2 * OCR2A * prescaler / 16 MHz: up to OCR2A and down again.
 TEST_F(PhaseCorrectPwmTest, APeriodSetsTheTopAndTheSmallestPrescaler) {
-  ASSERT_EQ(timer().Begin(10U), Error::kOk);
+  ASSERT_EQ(timer().Begin(10u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   EXPECT_EQ(OCR2A, 80);
   EXPECT_EQ(ClockSelect(), kDivide1);
@@ -194,12 +194,12 @@ TEST_F(PhaseCorrectPwmTest, APeriodSetsTheTopAndTheSmallestPrescaler) {
     uint8_t top;
     uint8_t clock_select;
   };
-  std::array<Case, 6> const cases{{{100U, 100, kDivide8},
-                                   {1000U, 250, kDivide32},
-                                   {2000U, 250, kDivide64},
-                                   {4000U, 250, kDivide128},
-                                   {8000U, 250, kDivide256},
-                                   {32767U, 255, kDivide1024}}};
+  std::array<Case, 6> const cases{{{100u, 100, kDivide8},
+                                   {1000u, 250, kDivide32},
+                                   {2000u, 250, kDivide64},
+                                   {4000u, 250, kDivide128},
+                                   {8000u, 250, kDivide256},
+                                   {32767u, 255, kDivide1024}}};
   for (auto const& c : cases) {
     EXPECT_EQ(timer().SetPeriod(c.period), Error::kOk) << c.period << " us";
     EXPECT_EQ(OCR2A, c.top) << c.period << " us";
@@ -208,41 +208,41 @@ TEST_F(PhaseCorrectPwmTest, APeriodSetsTheTopAndTheSmallestPrescaler) {
 }
 
 TEST_F(PhaseCorrectPwmTest, SetPeriodIsRefusedBeforeBegin) {
-  EXPECT_EQ(timer().SetPeriod(1000U), Error::kNotBegun);
+  EXPECT_EQ(timer().SetPeriod(1000u), Error::kNotBegun);
 
   EXPECT_EQ(OCR2A, 0);
 }
 
 TEST_F(PhaseCorrectPwmTest, SetPeriodRefusesAPeriodAboveTheLongest) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
-  EXPECT_EQ(timer().SetPeriod(static_cast<TimeType>(Timer2::kPeriodMax + 1U)),
+  EXPECT_EQ(timer().SetPeriod(static_cast<TimeType>(Timer2::kPeriodMax + 1u)),
             Error::kPeriodOutOfRange);
   EXPECT_EQ(OCR2A, 250);
 }
 
 TEST_F(PhaseCorrectPwmTest, SetPeriodRefusesAPeriodOfZero) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
 
-  EXPECT_EQ(timer().SetPeriod(0U), Error::kPeriodOutOfRange);
+  EXPECT_EQ(timer().SetPeriod(0u), Error::kPeriodOutOfRange);
 
   EXPECT_EQ(OCR2A, 250);
   EXPECT_EQ(ClockSelect(), kDivide32);
 }
 
 TEST_F(PhaseCorrectPwmTest, SetPeriodKeepsTheShareOfTheDuty) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().EnablePwm<Channel::kB>(kDutyMax), Error::kOk);
 
-  ASSERT_EQ(timer().SetPeriod(100U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(100u), Error::kOk);
 
   EXPECT_EQ(OCR2A, 100);
   EXPECT_EQ(OCR2B, 100);
 }
 
 TEST_F(PhaseCorrectPwmTest, StartSelectsTheClockFromZero) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   TCNT2.Set(42, false);
 
   EXPECT_EQ(timer().Start(), Error::kOk);
@@ -253,7 +253,7 @@ TEST_F(PhaseCorrectPwmTest, StartSelectsTheClockFromZero) {
 }
 
 TEST_F(PhaseCorrectPwmTest, StartWithoutCallbackLeavesTheInterruptOff) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
   ASSERT_EQ(timer().Start(), Error::kOk);
 
@@ -261,7 +261,7 @@ TEST_F(PhaseCorrectPwmTest, StartWithoutCallbackLeavesTheInterruptOff) {
 }
 
 TEST_F(PhaseCorrectPwmTest, StartWithCallbackEnablesTheInterrupt) {
-  ASSERT_EQ(timer().Begin(1000U, CountOverflow), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u, CountOverflow), Error::kOk);
   EXPECT_FALSE(BitIsSet(TIMSK2, TOIE2));
 
   ASSERT_EQ(timer().Start(), Error::kOk);
@@ -273,7 +273,7 @@ TEST_F(PhaseCorrectPwmTest, StartWithCallbackEnablesTheInterrupt) {
 // enabled with it, the interrupt would come at once.
 TEST_F(PhaseCorrectPwmTest,
        StartClearsTheOverflowFlagBeforeItEnablesTheInterrupt) {
-  ASSERT_EQ(timer().Begin(1000U, CountOverflow), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u, CountOverflow), Error::kOk);
 
   ASSERT_EQ(timer().Start(), Error::kOk);
 
@@ -282,7 +282,7 @@ TEST_F(PhaseCorrectPwmTest,
 }
 
 TEST_F(PhaseCorrectPwmTest, AttachInterruptWhileRunningClearsTheOverflowFlag) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   ASSERT_FALSE(BitIsSet(TIFR2, TOV2));
 
@@ -298,14 +298,14 @@ TEST_F(PhaseCorrectPwmTest, StartIsRefusedBeforeBegin) {
 }
 
 TEST_F(PhaseCorrectPwmTest, StartIsRefusedWhileRunning) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
 
   EXPECT_EQ(timer().Start(), Error::kRunning);
 }
 
 TEST_F(PhaseCorrectPwmTest, StartAfterStopBeginsFromZero) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   ASSERT_EQ(timer().Stop(), Error::kOk);
   TCNT2.Set(42, true);
@@ -316,7 +316,7 @@ TEST_F(PhaseCorrectPwmTest, StartAfterStopBeginsFromZero) {
 }
 
 TEST_F(PhaseCorrectPwmTest, TheOverflowCallsTheCallback) {
-  ASSERT_EQ(timer().Begin(1000U, CountOverflow), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u, CountOverflow), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
 
   timer().OnInterrupt();
@@ -326,7 +326,7 @@ TEST_F(PhaseCorrectPwmTest, TheOverflowCallsTheCallback) {
 }
 
 TEST_F(PhaseCorrectPwmTest, TheOverflowWithoutCallbackCallsNothing) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
   timer().OnInterrupt();
 
@@ -334,7 +334,7 @@ TEST_F(PhaseCorrectPwmTest, TheOverflowWithoutCallbackCallsNothing) {
 }
 
 TEST_F(PhaseCorrectPwmTest, StopDeselectsTheClock) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
 
   EXPECT_EQ(timer().Stop(), Error::kOk);
@@ -347,13 +347,13 @@ TEST_F(PhaseCorrectPwmTest, StopIsRefusedUnlessRunning) {
   EXPECT_EQ(timer().Stop(), Error::kNotRunning);
   EXPECT_EQ(timer().GetState(), State::kNotBegun);
 
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   EXPECT_EQ(timer().Stop(), Error::kNotRunning);
   EXPECT_EQ(timer().GetState(), State::kIdle);
 }
 
 TEST_F(PhaseCorrectPwmTest, ResumeLetsTheTimerRunAgain) {
-  ASSERT_EQ(timer().Begin(100U), Error::kOk);
+  ASSERT_EQ(timer().Begin(100u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   ASSERT_EQ(timer().Stop(), Error::kOk);
 
@@ -365,7 +365,7 @@ TEST_F(PhaseCorrectPwmTest, ResumeLetsTheTimerRunAgain) {
 }
 
 TEST_F(PhaseCorrectPwmTest, ResumeIsRefusedUnlessStopped) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
   EXPECT_EQ(timer().Resume(), Error::kNotStopped);
 
@@ -374,7 +374,7 @@ TEST_F(PhaseCorrectPwmTest, ResumeIsRefusedUnlessStopped) {
 }
 
 TEST_F(PhaseCorrectPwmTest, EnablePwmDrivesPin3WithTheDutyOfTheTop) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
   EXPECT_EQ(timer().EnablePwm<Channel::kB>(512), Error::kOk);
 
@@ -393,7 +393,7 @@ TEST_F(PhaseCorrectPwmTest, EnablePwmIsRefusedBeforeBegin) {
 }
 
 TEST_F(PhaseCorrectPwmTest, AFullDutyIsTheTopAndNoDutyTheBottom) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
   // OCR2B at the top keeps the output high all the time, at the bottom low.
   ASSERT_EQ(timer().EnablePwm<Channel::kB>(kDutyMax), Error::kOk);
@@ -403,7 +403,7 @@ TEST_F(PhaseCorrectPwmTest, AFullDutyIsTheTopAndNoDutyTheBottom) {
 }
 
 TEST_F(PhaseCorrectPwmTest, SetPwmDutySetsTheCompareValue) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().EnablePwm<Channel::kB>(512), Error::kOk);
 
   EXPECT_EQ(timer().SetPwmDuty<Channel::kB>(256), Error::kOk);
@@ -423,19 +423,19 @@ TEST_F(PhaseCorrectPwmTest, TheCompareValueIsComputedIn32Bits) {
 }
 
 TEST_F(PhaseCorrectPwmTest, ADutyAboveTheMaxIsRefused) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().EnablePwm<Channel::kB>(512), Error::kOk);
 
-  EXPECT_EQ(timer().SetPwmDuty<Channel::kB>(kDutyMax + 1U),
+  EXPECT_EQ(timer().SetPwmDuty<Channel::kB>(kDutyMax + 1u),
             Error::kDutyOutOfRange);
 
   EXPECT_EQ(OCR2B, 125);
 }
 
 TEST_F(PhaseCorrectPwmTest, EnablePwmWithADutyAboveTheMaxChangesNothing) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
-  EXPECT_EQ(timer().EnablePwm<Channel::kB>(kDutyMax + 1U),
+  EXPECT_EQ(timer().EnablePwm<Channel::kB>(kDutyMax + 1u),
             Error::kDutyOutOfRange);
 
   EXPECT_FALSE(BitIsSet(TCCR2A, COM2B1));
@@ -451,7 +451,7 @@ TEST_F(PhaseCorrectPwmTest, SetPwmDutyIsRefusedBeforeBegin) {
 }
 
 TEST_F(PhaseCorrectPwmTest, DisablePwmDisconnectsPin3) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().EnablePwm<Channel::kB>(512), Error::kOk);
 
   timer().DisablePwm<Channel::kB>();
@@ -460,7 +460,7 @@ TEST_F(PhaseCorrectPwmTest, DisablePwmDisconnectsPin3) {
 }
 
 TEST_F(PhaseCorrectPwmTest, AttachInterruptRefusesNullptr) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
   EXPECT_EQ(timer().AttachInterrupt(nullptr), Error::kNoCallback);
 
@@ -468,7 +468,7 @@ TEST_F(PhaseCorrectPwmTest, AttachInterruptRefusesNullptr) {
 }
 
 TEST_F(PhaseCorrectPwmTest, AttachInterruptWhileRunningEnablesTheInterrupt) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
 
   EXPECT_EQ(timer().AttachInterrupt(CountOverflow), Error::kOk);
@@ -479,7 +479,7 @@ TEST_F(PhaseCorrectPwmTest, AttachInterruptWhileRunningEnablesTheInterrupt) {
 }
 
 TEST_F(PhaseCorrectPwmTest, AttachInterruptBeforeStartLeavesTheInterruptOff) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
   EXPECT_EQ(timer().AttachInterrupt(CountOverflow), Error::kOk);
 
@@ -490,7 +490,7 @@ TEST_F(PhaseCorrectPwmTest, AttachInterruptBeforeStartLeavesTheInterruptOff) {
 // A-10: the interrupt stayed off, and the callback was never called.
 TEST_F(PhaseCorrectPwmTest,
        AttachInterruptWhileStoppedCallsTheCallbackAfterResume) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   ASSERT_EQ(timer().Stop(), Error::kOk);
 
@@ -502,7 +502,7 @@ TEST_F(PhaseCorrectPwmTest,
 
 TEST_F(PhaseCorrectPwmTest,
        DetachInterruptDisablesTheInterruptAndForgetsTheCallback) {
-  ASSERT_EQ(timer().Begin(1000U, CountOverflow), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u, CountOverflow), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
 
   timer().DetachInterrupt();
@@ -512,7 +512,7 @@ TEST_F(PhaseCorrectPwmTest,
 }
 
 TEST_F(PhaseCorrectPwmTest, StartAfterDetachInterruptLeavesTheInterruptOff) {
-  ASSERT_EQ(timer().Begin(1000U, CountOverflow), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u, CountOverflow), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   timer().DetachInterrupt();
   ASSERT_EQ(timer().Stop(), Error::kOk);
@@ -523,28 +523,28 @@ TEST_F(PhaseCorrectPwmTest, StartAfterDetachInterruptLeavesTheInterruptOff) {
 }
 
 TEST_F(PhaseCorrectPwmTest, ReadIsRefusedUnlessRunning) {
-  ASSERT_EQ(timer().Begin(100U), Error::kOk);
+  ASSERT_EQ(timer().Begin(100u), Error::kOk);
 
   Result<TimeType> const result{timer().Read()};
 
   EXPECT_EQ(result.GetError(), Error::kNotRunning);
-  EXPECT_EQ(result.GetValue(), 0U);
+  EXPECT_EQ(result.GetValue(), 0u);
 }
 
 // At 100 us the prescaler is 8: a step of the counter is 0.5 us.
 TEST_F(PhaseCorrectPwmTest, ReadCountsTheStepsUpwards) {
-  ASSERT_EQ(timer().Begin(100U), Error::kOk);
+  ASSERT_EQ(timer().Begin(100u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   TCNT2.Set(50, true);
 
   Result<TimeType> const result{timer().Read()};
 
   ASSERT_TRUE(result.IsOk());
-  EXPECT_EQ(result.GetValue(), 25U);
+  EXPECT_EQ(result.GetValue(), 25u);
 }
 
 TEST_F(PhaseCorrectPwmTest, ReadCountsTheStepsBackDownFromTheTop) {
-  ASSERT_EQ(timer().Begin(100U), Error::kOk);
+  ASSERT_EQ(timer().Begin(100u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   // 100 steps up and 92 down.
   TCNT2.Set(8, false);
@@ -552,11 +552,11 @@ TEST_F(PhaseCorrectPwmTest, ReadCountsTheStepsBackDownFromTheTop) {
   Result<TimeType> const result{timer().Read()};
 
   ASSERT_TRUE(result.IsOk());
-  EXPECT_EQ(result.GetValue(), 96U);
+  EXPECT_EQ(result.GetValue(), 96u);
 }
 
 TEST_F(PhaseCorrectPwmTest, ReadWaitsForTheCounterToStep) {
-  ASSERT_EQ(timer().Begin(100U), Error::kOk);
+  ASSERT_EQ(timer().Begin(100u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   TCNT2.Set(50, false);
   // The prescaler of 8 lets the CPU read each value several times.
@@ -566,25 +566,25 @@ TEST_F(PhaseCorrectPwmTest, ReadWaitsForTheCounterToStep) {
 
   ASSERT_TRUE(result.IsOk());
   // 100 steps up and 50 down, of 0.5 us.
-  EXPECT_EQ(result.GetValue(), 75U);
+  EXPECT_EQ(result.GetValue(), 75u);
 }
 
 // 16 steps of the counter are as many microseconds as the prescaler divides
 // by: 16 MHz / 16.
 TEST_F(PhaseCorrectPwmTest, ReadScalesByEachPrescaler) {
-  ASSERT_EQ(timer().Begin(10U), Error::kOk);
+  ASSERT_EQ(timer().Begin(10u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   struct Case {
     TimeType period;
     TimeType sixteen_steps;
   };
-  std::array<Case, 7> const cases{{{10U, 1U},
-                                   {100U, 8U},
-                                   {1000U, 32U},
-                                   {2000U, 64U},
-                                   {4000U, 128U},
-                                   {8000U, 256U},
-                                   {32767U, 1024U}}};
+  std::array<Case, 7> const cases{{{10u, 1u},
+                                   {100u, 8u},
+                                   {1000u, 32u},
+                                   {2000u, 64u},
+                                   {4000u, 128u},
+                                   {8000u, 256u},
+                                   {32767u, 1024u}}};
 
   for (auto const& c : cases) {
     ASSERT_EQ(timer().SetPeriod(c.period), Error::kOk);
@@ -609,7 +609,7 @@ TEST_F(PhaseCorrectPwmTest, BeginSetsTheModeOfTheTraits) {
 }
 
 TEST_F(PhaseCorrectPwmTest, APeriodTakesThePrescalersOfTheTraits) {
-  ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(other_timer().Begin(1000u), Error::kOk);
 
   ASSERT_EQ(other_timer().Start(), Error::kOk);
 
@@ -622,11 +622,11 @@ TEST_F(PhaseCorrectPwmTest, APeriodTakesThePrescalersOfTheTraits) {
 TEST_F(PhaseCorrectPwmTest,
        TheLongestPeriodIsThatOfTheLargestPrescalerOfTheTraits) {
   // 256 steps up and down at 16 MHz / 256.
-  EXPECT_EQ(PhaseCorrectPwm<OtherTraits>::kPeriodMax, 8191U);
+  EXPECT_EQ(PhaseCorrectPwm<OtherTraits>::kPeriodMax, 8191u);
 }
 
 TEST_F(PhaseCorrectPwmTest, EnablePwmDrivesThePinAndTheBitOfTheTraits) {
-  ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(other_timer().Begin(1000u), Error::kOk);
 
   EXPECT_EQ(other_timer().EnablePwm<Channel::kB>(512), Error::kOk);
 
@@ -639,7 +639,7 @@ TEST_F(PhaseCorrectPwmTest, EnablePwmDrivesThePinAndTheBitOfTheTraits) {
 }
 
 TEST_F(PhaseCorrectPwmTest, EnablePwmOfChannelADrivesItsOwnPinAndBit) {
-  ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(other_timer().Begin(1000u), Error::kOk);
 
   EXPECT_EQ(other_timer().EnablePwm<Channel::kA>(512), Error::kOk);
 
@@ -652,7 +652,7 @@ TEST_F(PhaseCorrectPwmTest, EnablePwmOfChannelADrivesItsOwnPinAndBit) {
 }
 
 TEST_F(PhaseCorrectPwmTest, EachChannelKeepsADutyOfItsOwn) {
-  ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(other_timer().Begin(1000u), Error::kOk);
 
   ASSERT_EQ(other_timer().EnablePwm<Channel::kA>(512), Error::kOk);
   ASSERT_EQ(other_timer().EnablePwm<Channel::kB>(256), Error::kOk);
@@ -663,11 +663,11 @@ TEST_F(PhaseCorrectPwmTest, EachChannelKeepsADutyOfItsOwn) {
 }
 
 TEST_F(PhaseCorrectPwmTest, SetPeriodKeepsTheShareOfTheDutyOfEachChannel) {
-  ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(other_timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(other_timer().EnablePwm<Channel::kA>(512), Error::kOk);
   ASSERT_EQ(other_timer().EnablePwm<Channel::kB>(256), Error::kOk);
 
-  ASSERT_EQ(other_timer().SetPeriod(2000U), Error::kOk);
+  ASSERT_EQ(other_timer().SetPeriod(2000u), Error::kOk);
 
   // 512 and 256 / 1023 of the new top, 250, rounded.
   ASSERT_EQ(OCR2A, 250);
@@ -676,7 +676,7 @@ TEST_F(PhaseCorrectPwmTest, SetPeriodKeepsTheShareOfTheDutyOfEachChannel) {
 }
 
 TEST_F(PhaseCorrectPwmTest, DisablePwmLeavesTheOtherChannel) {
-  ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(other_timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(other_timer().EnablePwm<Channel::kA>(512), Error::kOk);
   ASSERT_EQ(other_timer().EnablePwm<Channel::kB>(256), Error::kOk);
 
@@ -687,7 +687,7 @@ TEST_F(PhaseCorrectPwmTest, DisablePwmLeavesTheOtherChannel) {
 }
 
 TEST_F(PhaseCorrectPwmTest, DisablePwmClearsTheBitOfTheTraits) {
-  ASSERT_EQ(other_timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(other_timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(other_timer().EnablePwm<Channel::kB>(512), Error::kOk);
 
   other_timer().DisablePwm<Channel::kB>();
@@ -696,7 +696,7 @@ TEST_F(PhaseCorrectPwmTest, DisablePwmClearsTheBitOfTheTraits) {
 }
 
 TEST_F(PhaseCorrectPwmTest, StartEnablesTheInterruptOfTheTraits) {
-  ASSERT_EQ(other_timer().Begin(1000U, CountOverflow), Error::kOk);
+  ASSERT_EQ(other_timer().Begin(1000u, CountOverflow), Error::kOk);
 
   ASSERT_EQ(other_timer().Start(), Error::kOk);
 
@@ -705,7 +705,7 @@ TEST_F(PhaseCorrectPwmTest, StartEnablesTheInterruptOfTheTraits) {
 }
 
 TEST_F(PhaseCorrectPwmTest, DetachInterruptDisablesTheInterruptOfTheTraits) {
-  ASSERT_EQ(other_timer().Begin(1000U, CountOverflow), Error::kOk);
+  ASSERT_EQ(other_timer().Begin(1000u, CountOverflow), Error::kOk);
   ASSERT_EQ(other_timer().Start(), Error::kOk);
 
   other_timer().DetachInterrupt();

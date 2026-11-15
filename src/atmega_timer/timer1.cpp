@@ -15,7 +15,7 @@ namespace atmega_timer {
 Timer1 timer1;
 
 // timer1_ctc.cpp defines it as well, so that a sketch takes one of the two.
-uint8_t const internal::kOneObjectOnTimer1{0U};
+uint8_t const internal::kOneObjectOnTimer1{0u};
 
 }  // namespace atmega_timer
 

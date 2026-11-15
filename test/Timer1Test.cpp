@@ -34,7 +34,7 @@ int overflow_calls{0};
 void CountOverflow() { ++overflow_calls; }
 
 bool BitIsSet(uint8_t reg, unsigned bit) {
-  return ((static_cast<unsigned>(reg) >> bit) & 1U) != 0;
+  return ((static_cast<unsigned>(reg) >> bit) & 1u) != 0;
 }
 
 uint8_t ClockSelect() {
@@ -77,11 +77,11 @@ TEST_F(Timer1Test, BeginSetsPhaseAndFrequencyCorrectPwmWithoutAClock) {
 
 TEST_F(Timer1Test, TheLongestPeriodIsAbout8Seconds) {
   // 65536 steps up and down at 16 MHz / 1024.
-  EXPECT_EQ(Timer1::kPeriodMax, 8388607U);
+  EXPECT_EQ(Timer1::kPeriodMax, 8388607u);
 }
 
 TEST_F(Timer1Test, APeriodBeyondTheLongestIsRefused) {
-  EXPECT_EQ(timer().Begin(Timer1::kPeriodMax + 1U), Error::kPeriodOutOfRange);
+  EXPECT_EQ(timer().Begin(Timer1::kPeriodMax + 1u), Error::kPeriodOutOfRange);
 
   EXPECT_EQ(timer().GetState(), State::kNotBegun);
 }
@@ -115,17 +115,17 @@ TEST_P(Timer1PeriodTest, SetsTheTopAndTheSmallestPrescaler) {
 
 INSTANTIATE_TEST_SUITE_P(
     EachPrescaler, Timer1PeriodTest,
-    ::testing::Values(PeriodCase{"By1", 1000U, 8000U, 1},
-                      PeriodCase{"By8", 10000U, 10000U, 2},
-                      PeriodCase{"By64", 100000U, 12500U, 3},
-                      PeriodCase{"By256", 1000000U, 31250U, 4},
-                      PeriodCase{"By1024", 8388607U, 65535U, 5}),
+    ::testing::Values(PeriodCase{"By1", 1000u, 8000u, 1},
+                      PeriodCase{"By8", 10000u, 10000u, 2},
+                      PeriodCase{"By64", 100000u, 12500u, 3},
+                      PeriodCase{"By256", 1000000u, 31250u, 4},
+                      PeriodCase{"By1024", 8388607u, 65535u, 5}),
     [](::testing::TestParamInfo<PeriodCase> const& period_case) {
       return std::string{period_case.param.name};
     });
 
 TEST_F(Timer1Test, EnablePwmOfChannelADrivesPin9) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
   EXPECT_EQ(timer().EnablePwm<Channel::kA>(512), Error::kOk);
 
@@ -137,7 +137,7 @@ TEST_F(Timer1Test, EnablePwmOfChannelADrivesPin9) {
 }
 
 TEST_F(Timer1Test, EnablePwmOfChannelBDrivesPin10) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
   EXPECT_EQ(timer().EnablePwm<Channel::kB>(256), Error::kOk);
 
@@ -157,11 +157,11 @@ TEST_F(Timer1Test, AFullDutyIsTheTop) {
 }
 
 TEST_F(Timer1Test, SetPeriodKeepsTheShareOfTheDutyOfEachChannel) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().EnablePwm<Channel::kA>(512), Error::kOk);
   ASSERT_EQ(timer().EnablePwm<Channel::kB>(256), Error::kOk);
 
-  ASSERT_EQ(timer().SetPeriod(2000U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(2000u), Error::kOk);
 
   // 512 and 256 / 1023 of the new top, 16000, rounded.
   ASSERT_EQ(ICR1, 16000);
@@ -170,7 +170,7 @@ TEST_F(Timer1Test, SetPeriodKeepsTheShareOfTheDutyOfEachChannel) {
 }
 
 TEST_F(Timer1Test, StartEnablesTheOverflowInterrupt) {
-  ASSERT_EQ(timer().Begin(1000U, CountOverflow), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u, CountOverflow), Error::kOk);
 
   ASSERT_EQ(timer().Start(), Error::kOk);
 
@@ -180,14 +180,14 @@ TEST_F(Timer1Test, StartEnablesTheOverflowInterrupt) {
 
 // At 100 ms the prescaler is 64: a step of the counter is 4 us.
 TEST_F(Timer1Test, ReadCountsTheStepsUpwards) {
-  ASSERT_EQ(timer().Begin(100000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(100000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   TCNT1.Set(10000, true);
 
   Result<TimeType> const result{timer().Read()};
 
   ASSERT_TRUE(result.IsOk());
-  EXPECT_EQ(result.GetValue(), 40000U);
+  EXPECT_EQ(result.GetValue(), 40000u);
 }
 
 // At the longest period the steps up and back down exceed 16 bits, and
@@ -201,16 +201,16 @@ TEST_F(Timer1Test, ReadHoldsTheStepsOfTheLongestPeriod) {
   Result<TimeType> const result{timer().Read()};
 
   ASSERT_TRUE(result.IsOk());
-  EXPECT_EQ(result.GetValue(), 8382080U);
+  EXPECT_EQ(result.GetValue(), 8382080u);
 }
 
 // ICR1 is not buffered: a top written below the counter would let it run on
 // to 65535. While it counts, a new period waits for the bottom.
 TEST_F(Timer1Test, SetPeriodWhileRunningKeepsThePeriodUntilTheBottom) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
 
-  EXPECT_EQ(timer().SetPeriod(10000U), Error::kOk);
+  EXPECT_EQ(timer().SetPeriod(10000u), Error::kOk);
 
   EXPECT_EQ(ICR1, 8000);
   EXPECT_EQ(ClockSelect(), 1);
@@ -219,9 +219,9 @@ TEST_F(Timer1Test, SetPeriodWhileRunningKeepsThePeriodUntilTheBottom) {
 }
 
 TEST_F(Timer1Test, TheBottomTakesTheNewPeriod) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
-  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(10000u), Error::kOk);
 
   timer().OnInterrupt();
 
@@ -232,9 +232,9 @@ TEST_F(Timer1Test, TheBottomTakesTheNewPeriod) {
 }
 
 TEST_F(Timer1Test, TheBottomKeepsTheInterruptOfACallback) {
-  ASSERT_EQ(timer().Begin(1000U, CountOverflow), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u, CountOverflow), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
-  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(10000u), Error::kOk);
 
   timer().OnInterrupt();
 
@@ -246,11 +246,11 @@ TEST_F(Timer1Test, TheBottomKeepsTheInterruptOfACallback) {
 // The compare values are buffered: the hardware takes them at the bottom,
 // with the new top.
 TEST_F(Timer1Test, SetPeriodWhileRunningWritesTheCompareValuesAtOnce) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().EnablePwm<Channel::kA>(512), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
 
-  ASSERT_EQ(timer().SetPeriod(2000U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(2000u), Error::kOk);
 
   // 512 / 1023 of the new top, 16000, rounded.
   EXPECT_EQ(OCR1A, 8008);
@@ -258,9 +258,9 @@ TEST_F(Timer1Test, SetPeriodWhileRunningWritesTheCompareValuesAtOnce) {
 }
 
 TEST_F(Timer1Test, ADutyBeforeTheBottomIsAShareOfTheNewTop) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
-  ASSERT_EQ(timer().SetPeriod(2000U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(2000u), Error::kOk);
 
   ASSERT_EQ(timer().EnablePwm<Channel::kA>(512), Error::kOk);
 
@@ -271,21 +271,21 @@ TEST_F(Timer1Test, ADutyBeforeTheBottomIsAShareOfTheNewTop) {
 // The counter runs in the old period until the bottom: a step is still a
 // clock, 1/16 us, not 64 of them.
 TEST_F(Timer1Test, ReadBeforeTheBottomCountsInTheOldPeriod) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
-  ASSERT_EQ(timer().SetPeriod(100000U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(100000u), Error::kOk);
   TCNT1.Set(800, true);
 
   Result<TimeType> const result{timer().Read()};
 
   ASSERT_TRUE(result.IsOk());
-  EXPECT_EQ(result.GetValue(), 50U);
+  EXPECT_EQ(result.GetValue(), 50u);
 }
 
 TEST_F(Timer1Test, DetachInterruptBeforeTheBottomKeepsItForThePeriod) {
-  ASSERT_EQ(timer().Begin(1000U, CountOverflow), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u, CountOverflow), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
-  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(10000u), Error::kOk);
 
   timer().DetachInterrupt();
 
@@ -299,11 +299,11 @@ TEST_F(Timer1Test, DetachInterruptBeforeTheBottomKeepsItForThePeriod) {
 // Stopped, the counter may stand above the new top: Resume() would let it run
 // on. The period waits for the bottom there too.
 TEST_F(Timer1Test, SetPeriodWhileStoppedKeepsThePeriodUntilTheBottom) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   ASSERT_EQ(timer().Stop(), Error::kOk);
 
-  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(10000u), Error::kOk);
   ASSERT_EQ(timer().Resume(), Error::kOk);
 
   EXPECT_EQ(ICR1, 8000);
@@ -312,10 +312,10 @@ TEST_F(Timer1Test, SetPeriodWhileStoppedKeepsThePeriodUntilTheBottom) {
 }
 
 TEST_F(Timer1Test, AttachInterruptWhileStoppedKeepsItForThePeriod) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   ASSERT_EQ(timer().Stop(), Error::kOk);
-  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(10000u), Error::kOk);
 
   ASSERT_EQ(timer().AttachInterrupt(CountOverflow), Error::kOk);
 
@@ -324,10 +324,10 @@ TEST_F(Timer1Test, AttachInterruptWhileStoppedKeepsItForThePeriod) {
 
 // Start() begins at the bottom, so it takes a period that waits at once.
 TEST_F(Timer1Test, StartTakesAWaitingPeriodAtOnce) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   ASSERT_EQ(timer().Stop(), Error::kOk);
-  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(10000u), Error::kOk);
 
   ASSERT_EQ(timer().Start(), Error::kOk);
 
@@ -337,16 +337,16 @@ TEST_F(Timer1Test, StartTakesAWaitingPeriodAtOnce) {
 }
 
 TEST_F(Timer1Test, SetPeriodBeforeStartTakesThePeriodAtOnce) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
-  ASSERT_EQ(timer().SetPeriod(10000U), Error::kOk);
+  ASSERT_EQ(timer().SetPeriod(10000u), Error::kOk);
 
   EXPECT_EQ(ICR1, 10000);
   EXPECT_FALSE(BitIsSet(TIMSK1, TOIE1));
 }
 
 TEST_F(Timer1Test, TheOverflowInterruptCallsTheCallbackOfTimer1) {
-  ASSERT_EQ(timer1.Begin(1000U, CountOverflow), Error::kOk);
+  ASSERT_EQ(timer1.Begin(1000u, CountOverflow), Error::kOk);
   ASSERT_EQ(timer1.Start(), Error::kOk);
 
   TIMER1_OVF_vect();

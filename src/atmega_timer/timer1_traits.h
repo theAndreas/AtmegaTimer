@@ -55,7 +55,7 @@ struct Timer1Traits {
   /*! \brief The largest prescaler. */
   static constexpr ClockSelect kClockSelectLargest{ClockSelect::kDivide1024};
   /*! \brief The largest prescaler as a shift: 1024 is 2^10. */
-  static constexpr uint8_t kShiftLargest{10U};
+  static constexpr uint8_t kShiftLargest{10u};
 
   /*!
    * \brief Returns the prescaler of `clock_select` as a shift, 0 for none.
@@ -68,9 +68,9 @@ struct Timer1Traits {
    * PhaseCorrectPwm. */
   struct PhaseCorrectPwmMode {
     /*! \brief TCCR1A in mode 8: no bit of the mode. */
-    static constexpr uint8_t kModeTccra{0U};
+    static constexpr uint8_t kModeTccra{0u};
     /*! \brief TCCR1B in mode 8: WGM13, and no clock. */
-    static constexpr uint8_t kModeTccrb{1U << WGM13};
+    static constexpr uint8_t kModeTccrb{1u << WGM13};
     /*! \brief Whether the hardware buffers the top: ICR1 is not: written below
      * the counter, it lets the counter run on to 65535. */
     static constexpr bool kTopIsBuffered{false};
@@ -81,15 +81,15 @@ struct Timer1Traits {
     /*! \brief The first channel that gives a PWM: A, as ICR1 is the top. */
     static constexpr Channel kFirstChannel{Channel::kA};
     /*! \brief The number of channels that give a PWM: A and B. */
-    static constexpr uint8_t kChannelCount{2U};
+    static constexpr uint8_t kChannelCount{2u};
   };
 
   /*! \brief Timer/Counter1 in CTC, mode 12, for Ctc. */
   struct CtcMode {
     /*! \brief TCCR1A in mode 12: no bit of the mode. */
-    static constexpr uint8_t kModeTccra{0U};
+    static constexpr uint8_t kModeTccra{0u};
     /*! \brief TCCR1B in mode 12: WGM13 and WGM12, and no clock. */
-    static constexpr uint8_t kModeTccrb{(1U << WGM13) | (1U << WGM12)};
+    static constexpr uint8_t kModeTccrb{(1u << WGM13) | (1u << WGM12)};
     /*! \brief Whether the hardware buffers the top: ICR1 is not. */
     static constexpr bool kTopIsBuffered{false};
     /*! \brief The bit of TIMSK1 that enables the input capture interrupt. */
@@ -100,7 +100,7 @@ struct Timer1Traits {
     /*! \brief The first channel that toggles: A. */
     static constexpr Channel kFirstChannel{Channel::kA};
     /*! \brief The number of channels that toggle: A and B. */
-    static constexpr uint8_t kChannelCount{2U};
+    static constexpr uint8_t kChannelCount{2u};
     /*! \brief The first channel whose compare value is its own: A, as ICR1 is
      * the top. */
     static constexpr Channel kFirstOwnCompare{Channel::kA};

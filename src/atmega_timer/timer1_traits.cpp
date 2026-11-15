@@ -10,9 +10,9 @@ namespace atmega_timer {
 namespace {
 
 // The prescalers 8 to 256 as shifts; 1024 is kShiftLargest.
-constexpr uint8_t kShiftDivide8{3U};
-constexpr uint8_t kShiftDivide64{6U};
-constexpr uint8_t kShiftDivide256{8U};
+constexpr uint8_t kShiftDivide8{3u};
+constexpr uint8_t kShiftDivide64{6u};
+constexpr uint8_t kShiftDivide256{8u};
 
 }  // namespace
 
@@ -30,7 +30,7 @@ uint8_t Timer1Traits::ShiftOf(ClockSelect clock_select) {
     case ClockSelect::kNoClock:
     case ClockSelect::kDivide1:
     default:
-      return 0U;
+      return 0u;
   }
 }
 

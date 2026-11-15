@@ -38,7 +38,7 @@ constexpr uint64_t kLongestPeriodInClocks{uint64_t{2} * 256 * 1024};
 uint64_t Prescaler() {
   constexpr std::array<uint64_t, 8> kPrescalers{0,  1,   8,   32,
                                                 64, 128, 256, 1024};
-  return kPrescalers.at(TCCR2B & 0x07U);
+  return kPrescalers.at(TCCR2B & 0x07u);
 }
 
 // The period OCR2A and TCCR2B make, in clocks.
@@ -69,9 +69,9 @@ TEST_F(ClockTest, TheLongestPeriodIsTheLastThatFits) {
 TEST_F(ClockTest, TheLongestPeriodIsTakenAndOneMoreRefused) {
   ASSERT_EQ(timer().Begin(Timer2::kPeriodMax), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
-  EXPECT_EQ(Prescaler(), 1024U);
+  EXPECT_EQ(Prescaler(), 1024u);
 
-  EXPECT_EQ(timer().SetPeriod(static_cast<TimeType>(Timer2::kPeriodMax + 1U)),
+  EXPECT_EQ(timer().SetPeriod(static_cast<TimeType>(Timer2::kPeriodMax + 1u)),
             Error::kPeriodOutOfRange);
 }
 
@@ -99,12 +99,12 @@ TEST_F(ClockTest, APeriodShorterThanAStepIsRefused) {
   // One step up and one down at no prescaler: two clocks.
   constexpr bool kOneMicrosecondIsAStep{2 * kMicrosecondsPerSecond <= kClock};
 
-  EXPECT_EQ(timer().Begin(1U),
+  EXPECT_EQ(timer().Begin(1u),
             kOneMicrosecondIsAStep ? Error::kOk : Error::kPeriodOutOfRange);
 }
 
 TEST_F(ClockTest, ReadIsTheTimeOfTheStepsCounted) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   TCNT2.Set(50, true);
 
@@ -122,7 +122,7 @@ constexpr uint64_t kLongestPeriodOfTimer1InClocks{uint64_t{2} * 65536 * 1024};
 // The prescaler TCCR1B selects, 0 while the timer does not run.
 uint64_t PrescalerOfTimer1() {
   constexpr std::array<uint64_t, 6> kPrescalers{0, 1, 8, 64, 256, 1024};
-  return kPrescalers.at(TCCR1B & 0x07U);
+  return kPrescalers.at(TCCR1B & 0x07u);
 }
 
 // The period ICR1 and TCCR1B make, in clocks.
@@ -155,16 +155,16 @@ TEST_F(Timer1ClockTest, TheLongestPeriodIsTheLastThatFits) {
 TEST_F(Timer1ClockTest, TheLongestPeriodIsTakenAndOneMoreRefused) {
   ASSERT_EQ(timer().Begin(Timer1::kPeriodMax), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
-  EXPECT_EQ(PrescalerOfTimer1(), 1024U);
+  EXPECT_EQ(PrescalerOfTimer1(), 1024u);
 
-  EXPECT_EQ(timer().SetPeriod(Timer1::kPeriodMax + 1U),
+  EXPECT_EQ(timer().SetPeriod(Timer1::kPeriodMax + 1u),
             Error::kPeriodOutOfRange);
 }
 
 // The steps up from the top and back down beyond 16 bits, of the prescaler of
 // a period of 4 s.
 TEST_F(Timer1ClockTest, ReadIsTheTimeOfTheStepsCounted) {
-  ASSERT_EQ(timer().Begin(4000000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(4000000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   TCNT1.Set(10, false);
 
@@ -206,8 +206,8 @@ TEST_P(Timer1PeriodAtClockTest, IsMetWithinAStep) {
 
 // From two clocks at 1 MHz to the longest period at 20 MHz, about 6.7 s.
 INSTANTIATE_TEST_SUITE_P(FromTwoClocksToSeconds, Timer1PeriodAtClockTest,
-                         ::testing::Values(2U, 3U, 10U, 1000U, 100000U,
-                                           1000000U, 4194303U, 6710886U),
+                         ::testing::Values(2u, 3u, 10u, 1000u, 100000u,
+                                           1000000u, 4194303u, 6710886u),
                          [](::testing::TestParamInfo<uint32_t> const& period) {
                            return std::to_string(period.param) + "us";
                          });
@@ -243,10 +243,10 @@ TEST_F(CtcClockTest, TheLongestPeriodIsTheLastThatFits) {
 TEST_F(CtcClockTest, TheLongestPeriodIsTakenAndOneMoreRefused) {
   ASSERT_EQ(timer().Begin(Ctc<Timer2Traits>::kPeriodMax), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
-  EXPECT_EQ(Prescaler(), 1024U);
+  EXPECT_EQ(Prescaler(), 1024u);
 
   EXPECT_EQ(timer().SetPeriod(
-                static_cast<TimeType>(Ctc<Timer2Traits>::kPeriodMax + 1U)),
+                static_cast<TimeType>(Ctc<Timer2Traits>::kPeriodMax + 1u)),
             Error::kPeriodOutOfRange);
 }
 
@@ -275,12 +275,12 @@ TEST_F(CtcClockTest, APeriodOfOneStepIsRefused) {
   constexpr bool kOneMicrosecondIsTwoSteps{2 * kMicrosecondsPerSecond <=
                                            kClock};
 
-  EXPECT_EQ(timer().Begin(1U),
+  EXPECT_EQ(timer().Begin(1u),
             kOneMicrosecondIsTwoSteps ? Error::kOk : Error::kPeriodOutOfRange);
 }
 
 TEST_F(CtcClockTest, ReadIsTheTimeOfTheStepsCounted) {
-  ASSERT_EQ(timer().Begin(1000U), Error::kOk);
+  ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
   TCNT2.Set(50, true);
 
@@ -319,9 +319,9 @@ TEST_F(Timer1CtcClockTest, TheLongestPeriodIsTheLastThatFits) {
 TEST_F(Timer1CtcClockTest, TheLongestPeriodIsTakenAndOneMoreRefused) {
   ASSERT_EQ(timer().Begin(Ctc<Timer1Traits>::kPeriodMax), Error::kOk);
   ASSERT_EQ(timer().Start(), Error::kOk);
-  EXPECT_EQ(PrescalerOfTimer1(), 1024U);
+  EXPECT_EQ(PrescalerOfTimer1(), 1024u);
 
-  EXPECT_EQ(timer().SetPeriod(Ctc<Timer1Traits>::kPeriodMax + 1U),
+  EXPECT_EQ(timer().SetPeriod(Ctc<Timer1Traits>::kPeriodMax + 1u),
             Error::kPeriodOutOfRange);
 }
 
@@ -340,8 +340,8 @@ TEST_P(Timer1CtcClockTest, IsMetWithinAStep) {
 
 // From two clocks at 1 MHz to the longest period at 20 MHz, about 3.4 s.
 INSTANTIATE_TEST_SUITE_P(FromTwoClocksToSeconds, Timer1CtcClockTest,
-                         ::testing::Values(2U, 3U, 10U, 1000U, 100000U,
-                                           1000000U, 3355443U),
+                         ::testing::Values(2u, 3u, 10u, 1000u, 100000u,
+                                           1000000u, 3355443u),
                          [](::testing::TestParamInfo<uint32_t> const& period) {
                            return std::to_string(period.param) + "us";
                          });

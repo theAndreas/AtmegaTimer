@@ -6,7 +6,7 @@
 // Expected: the timer has no such channel
 
 // The clock a board's build defines, which this call of the compiler does not.
-#define F_CPU 16000000UL
+#define F_CPU 16000000uL
 
 #include "atmega_timer/phase_correct_pwm.h"
 #include "atmega_timer/status.h"

@@ -157,7 +157,7 @@ class Ctc
   // period, whatever the period.
   template <Channel Which>
   static void MatchAtTheBottom(OwnCompare<true> /*own*/) {
-    Base::Store(CompareOutputOf<Which>::Compare(), 0U);
+    Base::Store(CompareOutputOf<Which>::Compare(), 0u);
   }
 
   // A channel whose compare value is the top matches there.
@@ -171,14 +171,14 @@ class Ctc
     uint32_t const clocks{internal::PeriodInClocks(period)};
     clock_select = Base::SmallestClockSelectFor(clocks);
     if (clock_select == ClockSelect::kNoClock) {
-      return 0U;
+      return 0u;
     }
     uint32_t const steps{clocks >> Traits::ShiftOf(clock_select)};
     // No step at all: a period of 0, or of 1 us below 1 MHz.
-    if (steps == 0U) {
-      return 0U;
+    if (steps == 0u) {
+      return 0u;
     }
-    return static_cast<Counter>(steps - 1U);
+    return static_cast<Counter>(steps - 1u);
   }
 
   // For Base when the period changes: a toggle matches at 0 or at the top,

@@ -23,7 +23,7 @@ void CountMatch() { ++match_calls; }
 
 TEST(Timer2CtcTest, TheCompareMatchInterruptCallsTheCallbackOfTimer2Ctc) {
   ASSERT_EQ(timer2_ctc.GetState(), State::kNotBegun);
-  ASSERT_EQ(timer2_ctc.Begin(1000U, CountMatch), Error::kOk);
+  ASSERT_EQ(timer2_ctc.Begin(1000u, CountMatch), Error::kOk);
   ASSERT_EQ(timer2_ctc.Start(), Error::kOk);
 
   TIMER2_COMPA_vect();
