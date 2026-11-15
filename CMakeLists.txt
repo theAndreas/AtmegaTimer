@@ -75,5 +75,6 @@ add_variant(ctc TESTS ${ctc_object_tests})
 add_variant(1mhz CLOCK 1000000uL TESTS test/ClockTest.cpp)
 add_variant(20mhz CLOCK 20000000uL TESTS test/ClockTest.cpp)
 
-add_compile_fail_tests(DIRECTORY ${CMAKE_SOURCE_DIR}/test/compile_fail STANDARD gnu++11
+# Both in gnu++11, as a sketch is built, and in C++17, as the tests are.
+add_compile_fail_tests(DIRECTORY ${CMAKE_SOURCE_DIR}/test/compile_fail STANDARDS gnu++11 c++17
                        INCLUDES ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/test/mock)
