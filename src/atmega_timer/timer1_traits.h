@@ -16,8 +16,8 @@
 #include <avr/io.h>
 #include <stdint.h>
 
-#include "atmega_timer/Bit.h"
 #include "atmega_timer/core.h"
+#include "atmega_timer/timer16_traits.h"
 
 namespace atmega_timer {
 
@@ -38,91 +38,30 @@ constexpr uint8_t kOc1bPin{10};  // PB2
 }  // namespace internal
 
 /*!
- * \brief Timer/Counter1 of the ATmega328P and the ATmega2560, for the modes of
- *        a timer: its registers, its prescalers and its channels.
+ * \brief What Timer/Counter1 has of its own, for Timer16Traits: its registers,
+ *        its bits and its channels.
  *
- * PhaseCorrectPwmMode is phase and frequency correct PWM, mode 8, with ICR1 as
- * its top and OC1A and OC1B as its PWMs. Mode 8 takes the compare values at the
- * bottom, so the PWM stays symmetric when the period changes. CtcMode is CTC,
- * mode 12, with ICR1 as its top, whose input capture interrupt comes at the
- * top, and OC1A and OC1B as its toggles. Each register is returned as the
+ * Channels A and B. OC1C of the ATmega2560 is left out: its pin, 13 of the
+ * Mega, joins it with OC0A of Timer0. Each register is returned as the
  * vendor's header declares it, so that the compiler writes it where the
  * datasheet says.
  */
-struct Timer1Traits {
-  /*! \brief The type of the counter and its registers: 16 bits. */
-  using Counter = uint16_t;
-
-  /*!
-   * \brief A time in microseconds: 32 bits, as the longest period is about 8.4
-   *        s at 16 MHz.
-   */
-  using TimeType = uint32_t;
-
-  /*! \brief The values of the clock select bits CS12..CS10. */
-  enum class ClockSelect : uint8_t {
-    kNoClock = 0, /*!< The counter stands. */
-    kDivide1,     /*!< The CPU's clock. */
-    kDivide8,     /*!< The CPU's clock / 8. */
-    kDivide64,    /*!< The CPU's clock / 64. */
-    kDivide256,   /*!< The CPU's clock / 256. */
-    kDivide1024   /*!< The CPU's clock / 1024. */
-  };
-
-  /*! \brief The largest prescaler. */
-  static constexpr ClockSelect kClockSelectLargest{ClockSelect::kDivide1024};
-  /*! \brief The largest prescaler as a shift: 1024 is 2^10. */
-  static constexpr uint8_t kShiftLargest{10u};
-
-  /*!
-   * \brief Returns the prescaler of `clock_select` as a shift, 0 for none.
-   * \param[in] clock_select the prescaler
-   * \return the power of 2 it divides by
-   */
-  static uint8_t ShiftOf(ClockSelect clock_select);
-
-  /*! \brief Timer/Counter1 in phase and frequency correct PWM, mode 8, for
-   * PhaseCorrectPwm. */
-  struct PhaseCorrectPwmMode {
-    /*! \brief TCCR1A in mode 8: no bit of the mode. */
-    static constexpr uint8_t kModeTccra{0u};
-    /*! \brief TCCR1B in mode 8: WGM13, and no clock. */
-    static constexpr uint8_t kModeTccrb{Bit<uint8_t>::ToMask(WGM13)};
-    /*! \brief Whether the hardware buffers the top: ICR1 is not: written below
-     * the counter, it lets the counter run on to 65535. */
-    static constexpr bool kTopIsBuffered{false};
-    /*! \brief The bit of TIMSK1 that enables the overflow interrupt. */
-    static constexpr uint8_t kInterruptBit{TOIE1};
-    /*! \brief The bit of TIFR1 that flags an overflow, at the bottom. */
-    static constexpr uint8_t kFlagBit{TOV1};
-    /*! \brief The first channel that gives a PWM: A, as ICR1 is the top. */
-    static constexpr Channel kFirstChannel{Channel::kA};
-    /*! \brief The number of channels that give a PWM: A and B. */
-    static constexpr uint8_t kChannelCount{2u};
-  };
-
-  /*! \brief Timer/Counter1 in CTC, mode 12, for Ctc. */
-  struct CtcMode {
-    /*! \brief TCCR1A in mode 12: no bit of the mode. */
-    static constexpr uint8_t kModeTccra{0u};
-    /*! \brief TCCR1B in mode 12: WGM13 and WGM12, and no clock. */
-    static constexpr uint8_t kModeTccrb{Bit<uint8_t>::Combine(
-        Bit<uint8_t>::ToMask(WGM13), Bit<uint8_t>::ToMask(WGM12))};
-    /*! \brief Whether the hardware buffers the top: ICR1 is not. */
-    static constexpr bool kTopIsBuffered{false};
-    /*! \brief The bit of TIMSK1 that enables the input capture interrupt. */
-    static constexpr uint8_t kInterruptBit{ICIE1};
-    /*! \brief The bit of TIFR1 that flags the input capture, which mode 12
-     * sets at the top, ICR1, rather than at the pin ICP1. */
-    static constexpr uint8_t kFlagBit{ICF1};
-    /*! \brief The first channel that toggles: A. */
-    static constexpr Channel kFirstChannel{Channel::kA};
-    /*! \brief The number of channels that toggle: A and B. */
-    static constexpr uint8_t kChannelCount{2u};
-    /*! \brief The first channel whose compare value is its own: A, as ICR1 is
-     * the top. */
-    static constexpr Channel kFirstOwnCompare{Channel::kA};
-  };
+struct Timer1Registers {
+  /*! \brief The bit WGM12 of TCCR1B. */
+  static constexpr uint8_t kWgm2{WGM12};
+  /*! \brief The bit WGM13 of TCCR1B. */
+  static constexpr uint8_t kWgm3{WGM13};
+  /*! \brief The bit of TIMSK1 that enables the overflow interrupt: TOIE1. */
+  static constexpr uint8_t kOverflowInterruptBit{TOIE1};
+  /*! \brief The bit of TIFR1 that flags an overflow: TOV1. */
+  static constexpr uint8_t kOverflowFlagBit{TOV1};
+  /*! \brief The bit of TIMSK1 that enables the input capture interrupt:
+   * ICIE1. */
+  static constexpr uint8_t kCaptureInterruptBit{ICIE1};
+  /*! \brief The bit of TIFR1 that flags the input capture: ICF1. */
+  static constexpr uint8_t kCaptureFlagBit{ICF1};
+  /*! \brief The number of channels: A and B. */
+  static constexpr uint8_t kChannelCount{2u};
 
   /*!
    * \brief The compare output of a channel: its pin, its bits and its register.
@@ -135,19 +74,19 @@ struct Timer1Traits {
   static auto Tccra() -> decltype((TCCR1A)) { return TCCR1A; }
   /*! \brief TCCR1B. */
   static auto Tccrb() -> decltype((TCCR1B)) { return TCCR1B; }
-  /*! \brief ICR1, the top; not buffered, unlike the compare values. */
-  static auto Top() -> decltype((ICR1)) { return ICR1; }
+  /*! \brief ICR1. */
+  static auto Icr() -> decltype((ICR1)) { return ICR1; }
   /*! \brief TIMSK1. */
   static auto Timsk() -> decltype((TIMSK1)) { return TIMSK1; }
-  /*! \brief TIFR1, whose flags are cleared by writing 1. */
+  /*! \brief TIFR1. */
   static auto Tifr() -> decltype((TIFR1)) { return TIFR1; }
-  /*! \brief TCNT1, the counter. */
+  /*! \brief TCNT1. */
   static auto Tcnt() -> decltype((TCNT1)) { return TCNT1; }
 };
 
 /*! \brief OC1A, channel A of Timer1. */
 template <>
-struct Timer1Traits::CompareOutput<Channel::kA> {
+struct Timer1Registers::CompareOutput<Channel::kA> {
   /*! \brief The Arduino pin of OC1A: 9 on the Uno, 11 on the Mega. */
   static constexpr uint8_t kPin{internal::kOc1aPin};
   /*! \brief The bit of TCCR1A that connects OC1A: COM1A1, non-inverting. */
@@ -160,7 +99,7 @@ struct Timer1Traits::CompareOutput<Channel::kA> {
 
 /*! \brief OC1B, channel B of Timer1. */
 template <>
-struct Timer1Traits::CompareOutput<Channel::kB> {
+struct Timer1Registers::CompareOutput<Channel::kB> {
   /*! \brief The Arduino pin of OC1B: 10 on the Uno, 12 on the Mega. */
   static constexpr uint8_t kPin{internal::kOc1bPin};
   /*! \brief The bit of TCCR1A that connects OC1B: COM1B1, non-inverting. */
@@ -170,6 +109,12 @@ struct Timer1Traits::CompareOutput<Channel::kB> {
   /*! \brief OCR1B, its compare value. */
   static auto Compare() -> decltype((OCR1B)) { return OCR1B; }
 };
+
+/*!
+ * \brief Timer/Counter1 of the ATmega328P and the ATmega2560, for the modes of
+ *        a timer: its registers, its prescalers and its channels.
+ */
+using Timer1Traits = Timer16Traits<Timer1Registers>;
 
 namespace internal {
 

@@ -1,7 +1,7 @@
 // Copyright 2026 Andreas Burnickl
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "atmega_timer/timer1_traits.h"
+#include "atmega_timer/timer16_traits.h"
 
 #include <stdint.h>
 
@@ -9,7 +9,7 @@ namespace atmega_timer {
 
 namespace {
 
-// The prescalers 8 to 256 as shifts; 1024 is kShiftLargest.
+// The prescalers 8 to 256 as shifts; 1024 is kTimer16ShiftLargest.
 constexpr uint8_t kShiftDivide8{3u};
 constexpr uint8_t kShiftDivide64{6u};
 constexpr uint8_t kShiftDivide256{8u};
@@ -17,18 +17,18 @@ constexpr uint8_t kShiftDivide256{8u};
 }  // namespace
 
 // A switch rather than a table, which avr-gcc would copy to RAM.
-uint8_t Timer1Traits::ShiftOf(ClockSelect clock_select) {
+uint8_t internal::Timer16ShiftOf(Timer16ClockSelect clock_select) {
   switch (clock_select) {
-    case ClockSelect::kDivide8:
+    case Timer16ClockSelect::kDivide8:
       return kShiftDivide8;
-    case ClockSelect::kDivide64:
+    case Timer16ClockSelect::kDivide64:
       return kShiftDivide64;
-    case ClockSelect::kDivide256:
+    case Timer16ClockSelect::kDivide256:
       return kShiftDivide256;
-    case ClockSelect::kDivide1024:
-      return kShiftLargest;
-    case ClockSelect::kNoClock:
-    case ClockSelect::kDivide1:
+    case Timer16ClockSelect::kDivide1024:
+      return kTimer16ShiftLargest;
+    case Timer16ClockSelect::kNoClock:
+    case Timer16ClockSelect::kDivide1:
     default:
       return 0u;
   }
