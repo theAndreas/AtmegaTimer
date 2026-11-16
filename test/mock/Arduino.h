@@ -23,8 +23,8 @@ constexpr uint8_t OUTPUT{0x1};
 void pinMode(uint8_t pin, uint8_t mode);
 // NOLINTEND(readability-identifier-naming)
 
-// The mode pinMode() last set for each of the Uno's 20 pins, INPUT after a
-// reset.
-extern std::array<uint8_t, 20> mock_pin_mode;
+// The mode pinMode() last set for each of the Mega's 70 pins, of which the
+// Uno has the first 20, INPUT after a reset.
+extern std::array<uint8_t, 70> mock_pin_mode;
 
 #endif  // ATMEGATIMER_TEST_MOCK_ARDUINO_H_

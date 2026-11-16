@@ -42,5 +42,14 @@
 #include "atmega_timer/timer2.h"             // IWYU pragma: export
 #include "atmega_timer/timer2_ctc.h"         // IWYU pragma: export
 #include "atmega_timer/timer2_traits.h"      // IWYU pragma: export
+#include "atmega_timer/timer3.h"             // IWYU pragma: export
+#include "atmega_timer/timer3_ctc.h"         // IWYU pragma: export
+#include "atmega_timer/timer3_traits.h"      // IWYU pragma: export
+#include "atmega_timer/timer4.h"             // IWYU pragma: export
+#include "atmega_timer/timer4_ctc.h"         // IWYU pragma: export
+#include "atmega_timer/timer4_traits.h"      // IWYU pragma: export
+#include "atmega_timer/timer5.h"             // IWYU pragma: export
+#include "atmega_timer/timer5_ctc.h"         // IWYU pragma: export
+#include "atmega_timer/timer5_traits.h"      // IWYU pragma: export
 
 #endif  // ATMEGATIMER_SRC_ATMEGATIMER_H_

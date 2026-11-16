@@ -20,6 +20,35 @@ uint8_t volatile OCR2B{0};
 uint8_t volatile TIMSK2{0};
 uint8_t volatile TIFR2{0};
 MockCounter<uint8_t> TCNT2{TCCR2B, OCR2A};
+#ifdef __AVR_ATmega2560__
+uint8_t volatile TCCR3A{0};
+uint8_t volatile TCCR3B{0};
+uint16_t volatile ICR3{0};
+uint16_t volatile OCR3A{0};
+uint16_t volatile OCR3B{0};
+uint16_t volatile OCR3C{0};
+uint8_t volatile TIMSK3{0};
+uint8_t volatile TIFR3{0};
+MockCounter<uint16_t> TCNT3{TCCR3B, ICR3};
+uint8_t volatile TCCR4A{0};
+uint8_t volatile TCCR4B{0};
+uint16_t volatile ICR4{0};
+uint16_t volatile OCR4A{0};
+uint16_t volatile OCR4B{0};
+uint16_t volatile OCR4C{0};
+uint8_t volatile TIMSK4{0};
+uint8_t volatile TIFR4{0};
+MockCounter<uint16_t> TCNT4{TCCR4B, ICR4};
+uint8_t volatile TCCR5A{0};
+uint8_t volatile TCCR5B{0};
+uint16_t volatile ICR5{0};
+uint16_t volatile OCR5A{0};
+uint16_t volatile OCR5B{0};
+uint16_t volatile OCR5C{0};
+uint8_t volatile TIMSK5{0};
+uint8_t volatile TIFR5{0};
+MockCounter<uint16_t> TCNT5{TCCR5B, ICR5};
+#endif
 
 namespace {
 
