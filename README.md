@@ -70,7 +70,9 @@ not care. A channel the timer does not have does not compile: Timer2 has channel
 OCR2A is its top. [examples/Basics](examples/Basics/Basics.ino) is the sketch above,
 [examples/Read](examples/Read/Read.ino) checks each call and reads the time, and
 [examples/TwoChannels](examples/TwoChannels/TwoChannels.ino) drives both PWMs of Timer1 and
-changes their period while they run. The reference is built from the Doxygen blocks of `src/`.
+changes their period while they run. [examples/MegaTimers](examples/MegaTimers/MegaTimers.ino),
+for the Mega alone, gives three PWMs on Timer3, a toggle on channel C of Timer4 and an interrupt
+on Timer5. The reference is built from the Doxygen blocks of `src/`.
 
 ## From TimerTwo 2.0.0
 

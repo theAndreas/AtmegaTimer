@@ -42,10 +42,14 @@ SIMAVR_MCU="atmega328p"
 SIMAVR_FREQUENCY="16000000"
 
 # The Mega beside the Uno (ROADMAP.md, A-4): its ATmega2560 has the same Timer1 and Timer2, whose
-# compare outputs lie on other pins.
+# compare outputs lie on other pins, and Timer3 to Timer5, which examples/MegaTimers shows and the
+# Uno leaves out.
 TARGETS=(uno mega)
 target_settings() {
   case "$1" in
+    uno)
+      EXAMPLES=(Basics Read SelfCheck Toggle TwoChannels)
+      ;;
     mega)
       FQBN="arduino:avr:mega"
       SIMAVR_MCU="atmega2560"
