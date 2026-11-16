@@ -70,6 +70,10 @@ list(REMOVE_ITEM test_sources ${ctc_object_tests})
 
 add_variant(default)
 add_variant(ctc TESTS ${ctc_object_tests})
+# The ATmega2560 of the Mega, whose compare outputs lie on other pins than the Uno's: every test
+# again, as for the ATmega328P (ROADMAP.md, A-4).
+add_variant(mega DEFINES __AVR_ATmega2560__)
+add_variant(mega_ctc DEFINES __AVR_ATmega2560__ TESTS ${ctc_object_tests})
 # The clocks where TimerTwo 1 computed with a quotient of F_CPU that was cut or 0 (its OIL 2): the
 # tests that hold at any clock, as TimeType is 32 bits below 8 MHz.
 add_variant(1mhz CLOCK 1000000uL TESTS test/ClockTest.cpp)

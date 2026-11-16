@@ -18,6 +18,7 @@
 #include "atmega_timer/core.h"
 #include "atmega_timer/status.h"
 #include "atmega_timer/timer1_ctc.h"
+#include "test/pins.h"
 #include "test/printers.h"  // IWYU pragma: keep
 
 namespace atmega_timer {
@@ -124,25 +125,25 @@ INSTANTIATE_TEST_SUITE_P(
       return std::string{period_case.param.name};
     });
 
-TEST_F(Timer1CtcTest, EnableToggleOfChannelAToggles9AtTheBottom) {
+TEST_F(Timer1CtcTest, EnableToggleOfChannelATogglesOc1aAtTheBottom) {
   ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   OCR1A = 20000;
 
   EXPECT_EQ(timer().EnableToggle<Channel::kA>(), Error::kOk);
 
-  EXPECT_EQ(mock_pin_mode[9], OUTPUT);
+  EXPECT_EQ(mock_pin_mode[kOc1aPin], OUTPUT);
   EXPECT_TRUE(BitIsSet(TCCR1A, COM1A0));
   EXPECT_FALSE(BitIsSet(TCCR1A, COM1A1));
   EXPECT_EQ(OCR1A, 0);
 }
 
-TEST_F(Timer1CtcTest, EnableToggleOfChannelBToggles10AtTheBottom) {
+TEST_F(Timer1CtcTest, EnableToggleOfChannelBTogglesOc1bAtTheBottom) {
   ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   OCR1B = 20000;
 
   EXPECT_EQ(timer().EnableToggle<Channel::kB>(), Error::kOk);
 
-  EXPECT_EQ(mock_pin_mode[10], OUTPUT);
+  EXPECT_EQ(mock_pin_mode[kOc1bPin], OUTPUT);
   EXPECT_TRUE(BitIsSet(TCCR1A, COM1B0));
   EXPECT_FALSE(BitIsSet(TCCR1A, COM1B1));
   EXPECT_EQ(OCR1B, 0);

@@ -3,8 +3,8 @@
 
 /*!
  * \file
- * \brief Timer2Traits, Timer/Counter2 of the ATmega328P for the modes of a
- *        timer: its registers, its prescalers and its channels.
+ * \brief Timer2Traits, Timer/Counter2 of the ATmega328P and the ATmega2560 for
+ *        the modes of a timer: its registers, its prescalers and its channels.
  *
  * Apart from timer2.h, so that another object of Timer/Counter2 takes them
  * without timer2 and its interrupt.
@@ -21,9 +21,25 @@
 
 namespace atmega_timer {
 
+namespace internal {
+
+/*! \cond */
+// The Arduino pins of OC2A and OC2B, which lie elsewhere on the Mega than on
+// the Uno, as the core's pins_arduino.h of each has them.
+#ifdef __AVR_ATmega2560__
+constexpr uint8_t kOc2aPin{10};  // PB4
+constexpr uint8_t kOc2bPin{9};   // PH6
+#else
+constexpr uint8_t kOc2aPin{11};  // PB3
+constexpr uint8_t kOc2bPin{3};   // PD3
+#endif
+/*! \endcond */
+
+}  // namespace internal
+
 /*!
- * \brief Timer/Counter2 of the ATmega328P, for the modes of a timer: its
- *        registers, its prescalers and its channels.
+ * \brief Timer/Counter2 of the ATmega328P and the ATmega2560, for the modes of
+ *        a timer: its registers, its prescalers and its channels.
  *
  * PhaseCorrectPwmMode is mode 5, with OCR2A as its top and OC2B as its PWM.
  * CtcMode is mode 2, with OCR2A as its top, whose compare match A interrupt
@@ -138,8 +154,8 @@ struct Timer2Traits {
  */
 template <>
 struct Timer2Traits::CompareOutput<Channel::kA> {
-  /*! \brief The Arduino pin of OC2A, PB3. */
-  static constexpr uint8_t kPin{11};
+  /*! \brief The Arduino pin of OC2A: 11 on the Uno, 10 on the Mega. */
+  static constexpr uint8_t kPin{internal::kOc2aPin};
   /*! \brief The bit of TCCR2A that toggles OC2A at each match: COM2A0. */
   static constexpr uint8_t kToggleBit{COM2A0};
 };
@@ -147,8 +163,8 @@ struct Timer2Traits::CompareOutput<Channel::kA> {
 /*! \brief OC2B, channel B of Timer2, which gives the PWM. */
 template <>
 struct Timer2Traits::CompareOutput<Channel::kB> {
-  /*! \brief The Arduino pin of OC2B, PD3. */
-  static constexpr uint8_t kPin{3};
+  /*! \brief The Arduino pin of OC2B: 3 on the Uno, 9 on the Mega. */
+  static constexpr uint8_t kPin{internal::kOc2bPin};
   /*! \brief The bit of TCCR2A that connects OC2B: COM2B1, non-inverting. */
   static constexpr uint8_t kCompareOutputBit{COM2B1};
   /*! \brief The bit of TCCR2A that toggles OC2B at each match: COM2B0. */
