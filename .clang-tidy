@@ -41,8 +41,7 @@ Checks: >
   -modernize-use-trailing-return-type,
   -readability-identifier-length,
   -readability-named-parameter,
-  -bugprone-dynamic-static-initializers,
-  -house-no-friend
+  -bugprone-dynamic-static-initializers
 # house-*: the checks of our own, in tools/lib/tidy_module/; tools/tidy.sh loads them. Without
 #   the module, as in clangd, the name matches nothing. house-bitwise-in-bit-class takes the
 #   bit class to be any class named Bit (docs/CodingStyle.md H-9); a project whose class has
@@ -84,8 +83,6 @@ Checks: >
 #   a sketch shares with the interrupt, made when compiling by its constexpr constructor, and
 #   the constant whose two definitions stop a sketch from linking two objects of one timer.
 #   Both have to be one object, identified by its address.
-# house-no-friend: off until ROADMAP A-13 reaches the modes without a friend (C-12), which
-#   turns it on again (S-3).
 WarningsAsErrors: '*'
 # clang's warnings beyond -Wall -Wextra, which tools/tidy.sh passes: what an IDE such as CLion
 # finds with its own analysis of the code, reported here by clang-tidy as clang-diagnostic-*
