@@ -17,5 +17,14 @@ extern "C" void TIMER1_OVF_vect();    // NOLINT(readability-identifier-naming)
 extern "C" void TIMER2_OVF_vect();    // NOLINT(readability-identifier-naming)
 extern "C" void TIMER1_CAPT_vect();   // NOLINT(readability-identifier-naming)
 extern "C" void TIMER2_COMPA_vect();  // NOLINT(readability-identifier-naming)
+#ifdef __AVR_ATmega2560__
+// The same of Timer3 to Timer5, which the ATmega2560 alone has.
+extern "C" void TIMER3_OVF_vect();   // NOLINT(readability-identifier-naming)
+extern "C" void TIMER3_CAPT_vect();  // NOLINT(readability-identifier-naming)
+extern "C" void TIMER4_OVF_vect();   // NOLINT(readability-identifier-naming)
+extern "C" void TIMER4_CAPT_vect();  // NOLINT(readability-identifier-naming)
+extern "C" void TIMER5_OVF_vect();   // NOLINT(readability-identifier-naming)
+extern "C" void TIMER5_CAPT_vect();  // NOLINT(readability-identifier-naming)
+#endif
 
 #endif  // ATMEGATIMER_TEST_MOCK_AVR_INTERRUPT_H_

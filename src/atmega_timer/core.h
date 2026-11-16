@@ -31,7 +31,8 @@ namespace atmega_timer {
  */
 enum class Channel : uint8_t {
   kA, /*!< OCxA. */
-  kB  /*!< OCxB, after OCxA: the traits count the channels in this order. */
+  kB, /*!< OCxB, after OCxA: the traits count the channels in this order. */
+  kC  /*!< OCxC, after OCxB: Timer3 to Timer5 of the ATmega2560 alone. */
 };
 
 /*! \brief The function the interrupt of a timer calls. */

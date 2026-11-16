@@ -67,13 +67,19 @@ endfunction()
 set(ctc_object_tests ${CMAKE_SOURCE_DIR}/test/Timer1CtcTest.cpp
                      ${CMAKE_SOURCE_DIR}/test/Timer2CtcTest.cpp)
 list(REMOVE_ITEM test_sources ${ctc_object_tests})
+# Timer3 to Timer5, which the ATmega2560 alone has, in its builds alone; their objects in CTC apart
+# from those in PWM, as for Timer1 and Timer2.
+set(mega_object_tests ${CMAKE_SOURCE_DIR}/test/Timer3To5Test.cpp)
+set(mega_ctc_object_tests ${CMAKE_SOURCE_DIR}/test/Timer3To5CtcTest.cpp)
+list(REMOVE_ITEM test_sources ${mega_object_tests} ${mega_ctc_object_tests})
 
 add_variant(default)
 add_variant(ctc TESTS ${ctc_object_tests})
 # The ATmega2560 of the Mega, whose compare outputs lie on other pins than the Uno's: every test
-# again, as for the ATmega328P (ROADMAP.md, A-4).
-add_variant(mega DEFINES __AVR_ATmega2560__)
-add_variant(mega_ctc DEFINES __AVR_ATmega2560__ TESTS ${ctc_object_tests})
+# again, as for the ATmega328P (ROADMAP.md, A-4), and those of Timer3 to Timer5 (A-5).
+add_variant(mega DEFINES __AVR_ATmega2560__ TESTS ${test_sources} ${mega_object_tests})
+add_variant(mega_ctc DEFINES __AVR_ATmega2560__ TESTS ${ctc_object_tests}
+                                                      ${mega_ctc_object_tests})
 # The clocks where TimerTwo 1 computed with a quotient of F_CPU that was cut or 0 (its OIL 2): the
 # tests that hold at any clock, as TimeType is 32 bits below 8 MHz.
 add_variant(1mhz CLOCK 1000000uL TESTS test/ClockTest.cpp)

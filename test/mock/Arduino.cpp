@@ -7,7 +7,7 @@
 
 #include <array>
 
-std::array<uint8_t, 20> mock_pin_mode{};
+std::array<uint8_t, 70> mock_pin_mode{};
 
 void pinMode(uint8_t pin, uint8_t mode) {
   if (pin < mock_pin_mode.size()) {

@@ -5,3 +5,7 @@
 #   INPUT                  += docs/Wiring.md
 #   IMAGE_PATH             = docs
 #   PREDEFINED             += PREFIX_CHECK_ACCESS=1
+
+# The reference documents Timer3 to Timer5 as well, which the headers declare on the ATmega2560
+# alone.
+PREDEFINED             += __AVR_ATmega2560__
