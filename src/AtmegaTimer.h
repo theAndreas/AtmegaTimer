@@ -36,6 +36,7 @@
 #include "atmega_timer/phase_correct_pwm.h"  // IWYU pragma: export
 #include "atmega_timer/status.h"             // IWYU pragma: export
 #include "atmega_timer/timer1.h"             // IWYU pragma: export
+#include "atmega_timer/timer16_traits.h"     // IWYU pragma: export
 #include "atmega_timer/timer1_ctc.h"         // IWYU pragma: export
 #include "atmega_timer/timer1_traits.h"      // IWYU pragma: export
 #include "atmega_timer/timer2.h"             // IWYU pragma: export
