@@ -8,9 +8,9 @@
 // The clock a board's build defines, which this call of the compiler does not.
 #define F_CPU 16000000uL
 
-#include "atmega_timer/phase_correct_pwm.h"
+#include "atmega_timer/Modes/phase_correct_pwm.h"
+#include "atmega_timer/Timer2/timer2.h"
 #include "atmega_timer/status.h"
-#include "atmega_timer/timer2.h"
 
 void EnablePwmOnChannelA() {
   atmega_timer::Discard(

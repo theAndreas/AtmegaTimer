@@ -64,13 +64,13 @@ endfunction()
 
 # timer1 and timer1_ctc, timer2 and timer2_ctc do not link into one program, as in a sketch
 # (ROADMAP.md, Decisions): the tests of the objects in CTC are a program of their own.
-set(ctc_object_tests ${CMAKE_SOURCE_DIR}/test/Timer1CtcTest.cpp
-                     ${CMAKE_SOURCE_DIR}/test/Timer2CtcTest.cpp)
+set(ctc_object_tests ${CMAKE_SOURCE_DIR}/test/Timer1/Timer1CtcTest.cpp
+                     ${CMAKE_SOURCE_DIR}/test/Timer2/Timer2CtcTest.cpp)
 list(REMOVE_ITEM test_sources ${ctc_object_tests})
 # Timer3 to Timer5, which the ATmega2560 alone has, in its builds alone; their objects in CTC apart
 # from those in PWM, as for Timer1 and Timer2.
-set(mega_object_tests ${CMAKE_SOURCE_DIR}/test/Timer3To5Test.cpp)
-set(mega_ctc_object_tests ${CMAKE_SOURCE_DIR}/test/Timer3To5CtcTest.cpp)
+set(mega_object_tests ${CMAKE_SOURCE_DIR}/test/Timer3To5/Timer3To5Test.cpp)
+set(mega_ctc_object_tests ${CMAKE_SOURCE_DIR}/test/Timer3To5/Timer3To5CtcTest.cpp)
 list(REMOVE_ITEM test_sources ${mega_object_tests} ${mega_ctc_object_tests})
 
 add_variant(default)
@@ -82,8 +82,8 @@ add_variant(mega_ctc DEFINES __AVR_ATmega2560__ TESTS ${ctc_object_tests}
                                                       ${mega_ctc_object_tests})
 # The clocks where TimerTwo 1 computed with a quotient of F_CPU that was cut or 0 (its OIL 2): the
 # tests that hold at any clock, as TimeType is 32 bits below 8 MHz.
-add_variant(1mhz CLOCK 1000000uL TESTS test/ClockTest.cpp)
-add_variant(20mhz CLOCK 20000000uL TESTS test/ClockTest.cpp)
+add_variant(1mhz CLOCK 1000000uL TESTS test/Modes/ClockTest.cpp)
+add_variant(20mhz CLOCK 20000000uL TESTS test/Modes/ClockTest.cpp)
 
 # Both in gnu++11, as a sketch is built, and in C++17, as the tests are.
 add_compile_fail_tests(DIRECTORY ${CMAKE_SOURCE_DIR}/test/compile_fail STANDARDS gnu++11 c++17

@@ -30,26 +30,26 @@
 #ifndef ATMEGATIMER_SRC_ATMEGATIMER_H_
 #define ATMEGATIMER_SRC_ATMEGATIMER_H_
 
-#include "atmega_timer/attributes.h"         // IWYU pragma: export
-#include "atmega_timer/core.h"               // IWYU pragma: export
-#include "atmega_timer/ctc.h"                // IWYU pragma: export
-#include "atmega_timer/phase_correct_pwm.h"  // IWYU pragma: export
-#include "atmega_timer/status.h"             // IWYU pragma: export
-#include "atmega_timer/timer1.h"             // IWYU pragma: export
-#include "atmega_timer/timer16_traits.h"     // IWYU pragma: export
-#include "atmega_timer/timer1_ctc.h"         // IWYU pragma: export
-#include "atmega_timer/timer1_traits.h"      // IWYU pragma: export
-#include "atmega_timer/timer2.h"             // IWYU pragma: export
-#include "atmega_timer/timer2_ctc.h"         // IWYU pragma: export
-#include "atmega_timer/timer2_traits.h"      // IWYU pragma: export
-#include "atmega_timer/timer3.h"             // IWYU pragma: export
-#include "atmega_timer/timer3_ctc.h"         // IWYU pragma: export
-#include "atmega_timer/timer3_traits.h"      // IWYU pragma: export
-#include "atmega_timer/timer4.h"             // IWYU pragma: export
-#include "atmega_timer/timer4_ctc.h"         // IWYU pragma: export
-#include "atmega_timer/timer4_traits.h"      // IWYU pragma: export
-#include "atmega_timer/timer5.h"             // IWYU pragma: export
-#include "atmega_timer/timer5_ctc.h"         // IWYU pragma: export
-#include "atmega_timer/timer5_traits.h"      // IWYU pragma: export
+#include "atmega_timer/Modes/core.h"               // IWYU pragma: export
+#include "atmega_timer/Modes/ctc.h"                // IWYU pragma: export
+#include "atmega_timer/Modes/phase_correct_pwm.h"  // IWYU pragma: export
+#include "atmega_timer/Timer1/timer1.h"            // IWYU pragma: export
+#include "atmega_timer/Timer1/timer1_ctc.h"        // IWYU pragma: export
+#include "atmega_timer/Timer1/timer1_traits.h"     // IWYU pragma: export
+#include "atmega_timer/Timer16/timer16_traits.h"   // IWYU pragma: export
+#include "atmega_timer/Timer2/timer2.h"            // IWYU pragma: export
+#include "atmega_timer/Timer2/timer2_ctc.h"        // IWYU pragma: export
+#include "atmega_timer/Timer2/timer2_traits.h"     // IWYU pragma: export
+#include "atmega_timer/Timer3/timer3.h"            // IWYU pragma: export
+#include "atmega_timer/Timer3/timer3_ctc.h"        // IWYU pragma: export
+#include "atmega_timer/Timer3/timer3_traits.h"     // IWYU pragma: export
+#include "atmega_timer/Timer4/timer4.h"            // IWYU pragma: export
+#include "atmega_timer/Timer4/timer4_ctc.h"        // IWYU pragma: export
+#include "atmega_timer/Timer4/timer4_traits.h"     // IWYU pragma: export
+#include "atmega_timer/Timer5/timer5.h"            // IWYU pragma: export
+#include "atmega_timer/Timer5/timer5_ctc.h"        // IWYU pragma: export
+#include "atmega_timer/Timer5/timer5_traits.h"     // IWYU pragma: export
+#include "atmega_timer/attributes.h"               // IWYU pragma: export
+#include "atmega_timer/status.h"                   // IWYU pragma: export
 
 #endif  // ATMEGATIMER_SRC_ATMEGATIMER_H_
