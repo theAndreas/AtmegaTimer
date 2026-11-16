@@ -41,6 +41,18 @@ ARDUINO_BOARD_URLS=""
 SIMAVR_MCU="atmega328p"
 SIMAVR_FREQUENCY="16000000"
 
+# The Mega beside the Uno (ROADMAP.md, A-4): its ATmega2560 has the same Timer1 and Timer2, whose
+# compare outputs lie on other pins.
+TARGETS=(uno mega)
+target_settings() {
+  case "$1" in
+    mega)
+      FQBN="arduino:avr:mega"
+      SIMAVR_MCU="atmega2560"
+      ;;
+  esac
+}
+
 # One build of each example, as avr-gcc builds it by default. A variant whose defines take
 # other branches of #if, a switch for checks the library makes only on request, is added here
 # and in TIDY_VARIANTS, its flags in variant_flags():

@@ -15,7 +15,7 @@
 // - With ATMEGATIMER_PWM beside it: timer1 and timer2 in phase correct PWM in
 //   place of CTC, and the PWM of each.
 //
-// On a board, two wires: pin 9, OC1A, to pin 2, and pin 3, OC2B, to pin 4.
+// On the Uno, two wires: pin 9, OC1A, to pin 2, and pin 3, OC2B, to pin 4.
 
 #include <AtmegaTimer.h>
 #include <avr/interrupt.h>

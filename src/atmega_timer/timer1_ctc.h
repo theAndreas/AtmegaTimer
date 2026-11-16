@@ -3,10 +3,12 @@
 
 /*!
  * \file
- * \brief timer1_ctc, Timer/Counter1 of the ATmega328P in CTC.
+ * \brief timer1_ctc, Timer/Counter1 of the ATmega328P and the ATmega2560 in
+ *        CTC.
  *
- * It breaks `Servo`, which runs on Timer1 on the ATmega328P, and analogWrite()
- * on pins 9 and 10. Both channels toggle: ICR1 is the top.
+ * It breaks analogWrite() on pins 9 and 10 of the Uno, 11 and 12 of the Mega,
+ * and `Servo`, which runs on Timer1 on the Uno, and on the Mega from its 13th
+ * servo on. Both channels toggle: ICR1 is the top.
  * A sketch uses timer1_ctc or timer1, not both: with both it fails to link.
  */
 

@@ -1,10 +1,11 @@
 // Copyright 2026 Andreas Burnickl
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Toggles the LED at the longest period of the timer, gives a PWM on pin 3,
-// and prints how long ago the counter was last at its bottom: 20 ms after the
-// start, as the period is about 33 ms and has not ended yet. Each call that
-// can refuse is checked, and a refusal printed with its reason.
+// Toggles the LED at the longest period of the timer, gives a PWM on pin 3 of
+// the Uno, pin 9 of the Mega, and prints how long ago the counter was last at
+// its bottom: 20 ms after the start, as the period is about 33 ms and has not
+// ended yet. Each call that can refuse is checked, and a refusal printed with
+// its reason.
 
 #include <AtmegaTimer.h>
 #include <stdint.h>
