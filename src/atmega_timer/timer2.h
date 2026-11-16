@@ -3,10 +3,12 @@
 
 /*!
  * \file
- * \brief timer2, Timer/Counter2 of the ATmega328P as a Timer.
+ * \brief timer2, Timer/Counter2 of the ATmega328P and the ATmega2560 as a
+ *        Timer.
  *
- * It breaks analogWrite() on pins 3 and 11, and tone(), which use Timer2 as
- * well. Pin 11, OC2A, gives no PWM: OCR2A is the top of the counter.
+ * It breaks analogWrite() on pins 3 and 11 of the Uno, 9 and 10 of the Mega,
+ * and tone(), which use Timer2 as well. OC2A gives no PWM: OCR2A is the top of
+ * the counter.
  */
 
 #ifndef ATMEGATIMER_SRC_ATMEGA_TIMER_TIMER2_H_

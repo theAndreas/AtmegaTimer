@@ -1,12 +1,13 @@
 // Copyright 2026 Andreas Burnickl
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// The registers of Timer/Counter1 and Timer/Counter2 of the ATmega328P, for
-// the tests on the host: each a variable the tests read and set, with the
-// numbers of its bits as avr-libc names them. TCNT1 and TCNT2 count as the
-// timers do in phase correct PWM, modes 8 and 5: one step on each read while a
-// clock is selected, up from 0 to the top, ICR1 or OCR2A, and down again, so
-// that what waits for the counter to move sees it move.
+// The registers of Timer/Counter1 and Timer/Counter2 of the ATmega328P, which
+// the ATmega2560 has alike, for the tests on the host: each a variable the
+// tests read and set, with the numbers of its bits as avr-libc names them.
+// TCNT1 and TCNT2 count as the timers do in phase correct PWM, modes 8 and 5:
+// one step on each read while a clock is selected, up from 0 to the top, ICR1
+// or OCR2A, and down again, so that what waits for the counter to move sees it
+// move.
 
 #ifndef ATMEGATIMER_TEST_MOCK_AVR_IO_H_
 #define ATMEGATIMER_TEST_MOCK_AVR_IO_H_

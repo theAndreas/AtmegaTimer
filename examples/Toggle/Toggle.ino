@@ -1,9 +1,9 @@
 // Copyright 2026 Andreas Burnickl
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// Gives a square wave of 500 Hz on pin 3 by the toggle of channel B of Timer2
-// in CTC, without the CPU, and toggles the LED from the callback every half
-// second.
+// Gives a square wave of 500 Hz on pin 3 of the Uno, pin 9 of the Mega, by the
+// toggle of channel B of Timer2 in CTC, without the CPU, and toggles the LED
+// from the callback every half second.
 
 #include <AtmegaTimer.h>
 #include <stdint.h>

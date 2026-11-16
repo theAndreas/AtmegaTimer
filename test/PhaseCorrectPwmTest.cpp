@@ -18,6 +18,7 @@
 #include "atmega_timer/status.h"
 #include "atmega_timer/timer2.h"
 #include "atmega_timer/timer2_traits.h"
+#include "test/pins.h"
 #include "test/printers.h"  // IWYU pragma: keep
 
 namespace atmega_timer {
@@ -30,8 +31,9 @@ uint8_t volatile other_compare_a{0};
 
 // Traits on the registers of Timer2 whose every other value differs from
 // Timer2Traits, so that a test shows where the timer takes it from: other mode
-// bits, the prescalers 1, 8, 64 and 256, two channels, A on pin 10 and COM2A1
-// and B on pin 9 and COM2B0, and the interrupt and its flag at bits 1 and 2.
+// bits, the prescalers 1, 8, 64 and 256, two channels, A on pin 5 and COM2A1
+// and B on pin 6 and COM2B0, pins of Timer2 on neither board, and the
+// interrupt and its flag at bits 1 and 2.
 struct OtherTraits {
   using Counter = uint8_t;
   using TimeType = Timer2Traits::TimeType;
@@ -85,14 +87,14 @@ struct OtherTraits {
 
 template <>
 struct OtherTraits::CompareOutput<Channel::kA> {
-  static constexpr uint8_t kPin{10};
+  static constexpr uint8_t kPin{5};
   static constexpr uint8_t kCompareOutputBit{COM2A1};
   static uint8_t volatile& Compare() { return other_compare_a; }
 };
 
 template <>
 struct OtherTraits::CompareOutput<Channel::kB> {
-  static constexpr uint8_t kPin{9};
+  static constexpr uint8_t kPin{6};
   static constexpr uint8_t kCompareOutputBit{COM2B0};
   static uint8_t volatile& Compare() { return OCR2B; }
 };
@@ -374,12 +376,12 @@ TEST_F(PhaseCorrectPwmTest, ResumeIsRefusedUnlessStopped) {
   EXPECT_EQ(timer().Resume(), Error::kNotStopped);
 }
 
-TEST_F(PhaseCorrectPwmTest, EnablePwmDrivesPin3WithTheDutyOfTheTop) {
+TEST_F(PhaseCorrectPwmTest, EnablePwmDrivesOc2bWithTheDutyOfTheTop) {
   ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
   EXPECT_EQ(timer().EnablePwm<Channel::kB>(512), Error::kOk);
 
-  EXPECT_EQ(mock_pin_mode[3], OUTPUT);
+  EXPECT_EQ(mock_pin_mode[kOc2bPin], OUTPUT);
   EXPECT_TRUE(BitIsSet(TCCR2A, COM2B1));
   EXPECT_FALSE(BitIsSet(TCCR2A, COM2B0));
   // 512 / 1023 of the top, 250, rounded.
@@ -390,7 +392,7 @@ TEST_F(PhaseCorrectPwmTest, EnablePwmIsRefusedBeforeBegin) {
   EXPECT_EQ(timer().EnablePwm<Channel::kB>(512), Error::kNotBegun);
 
   EXPECT_FALSE(BitIsSet(TCCR2A, COM2B1));
-  EXPECT_EQ(mock_pin_mode[3], INPUT);
+  EXPECT_EQ(mock_pin_mode[kOc2bPin], INPUT);
 }
 
 TEST_F(PhaseCorrectPwmTest, AFullDutyIsTheTopAndNoDutyTheBottom) {
@@ -440,7 +442,7 @@ TEST_F(PhaseCorrectPwmTest, EnablePwmWithADutyAboveTheMaxChangesNothing) {
             Error::kDutyOutOfRange);
 
   EXPECT_FALSE(BitIsSet(TCCR2A, COM2B1));
-  EXPECT_EQ(mock_pin_mode[3], INPUT);
+  EXPECT_EQ(mock_pin_mode[kOc2bPin], INPUT);
 }
 
 TEST_F(PhaseCorrectPwmTest, SetPwmDutyIsRefusedBeforeBegin) {
@@ -451,7 +453,7 @@ TEST_F(PhaseCorrectPwmTest, SetPwmDutyIsRefusedBeforeBegin) {
   EXPECT_EQ(OCR2B, 7);
 }
 
-TEST_F(PhaseCorrectPwmTest, DisablePwmDisconnectsPin3) {
+TEST_F(PhaseCorrectPwmTest, DisablePwmDisconnectsOc2b) {
   ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   ASSERT_EQ(timer().EnablePwm<Channel::kB>(512), Error::kOk);
 
@@ -631,8 +633,8 @@ TEST_F(PhaseCorrectPwmTest, EnablePwmDrivesThePinAndTheBitOfTheTraits) {
 
   EXPECT_EQ(other_timer().EnablePwm<Channel::kB>(512), Error::kOk);
 
-  EXPECT_EQ(mock_pin_mode[9], OUTPUT);
-  EXPECT_EQ(mock_pin_mode[3], INPUT);
+  EXPECT_EQ(mock_pin_mode[6], OUTPUT);
+  EXPECT_EQ(mock_pin_mode[kOc2bPin], INPUT);
   EXPECT_TRUE(BitIsSet(TCCR2A, COM2B0));
   EXPECT_FALSE(BitIsSet(TCCR2A, COM2B1));
   // 512 / 1023 of the top, 125, rounded.
@@ -644,8 +646,8 @@ TEST_F(PhaseCorrectPwmTest, EnablePwmOfChannelADrivesItsOwnPinAndBit) {
 
   EXPECT_EQ(other_timer().EnablePwm<Channel::kA>(512), Error::kOk);
 
-  EXPECT_EQ(mock_pin_mode[10], OUTPUT);
-  EXPECT_EQ(mock_pin_mode[9], INPUT);
+  EXPECT_EQ(mock_pin_mode[5], OUTPUT);
+  EXPECT_EQ(mock_pin_mode[6], INPUT);
   EXPECT_TRUE(BitIsSet(TCCR2A, COM2A1));
   EXPECT_FALSE(BitIsSet(TCCR2A, COM2B0));
   // 512 / 1023 of the top, 125, rounded.

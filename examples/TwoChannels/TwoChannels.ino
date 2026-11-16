@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Two PWMs of their own duty from Timer1, a quarter on pin 9 and three
-// quarters on pin 10, at 1 kHz; after a second at 500 Hz. Timer1 takes the
-// new period at the next bottom of its counter, so that no PWM loses a pulse,
-// and the time it reads until then is still in the old period. Each call that
-// can refuse is checked, and a refusal printed with its reason.
+// quarters on pin 10 of the Uno, on pins 11 and 12 of the Mega, at 1 kHz; after
+// a second at 500 Hz. Timer1 takes the new period at the next bottom of its
+// counter, so that no PWM loses a pulse, and the time it reads until then is
+// still in the old period. Each call that can refuse is checked, and a refusal
+// printed with its reason.
 
 #include <AtmegaTimer.h>
 #include <stdint.h>

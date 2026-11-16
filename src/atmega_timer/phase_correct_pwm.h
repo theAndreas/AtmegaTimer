@@ -88,7 +88,7 @@ class PhaseCorrectPwm
 
   /*!
    * \brief Starts the PWM of a channel on its pin, with a duty: channel B of
-   *        Timer2 on pin 3.
+   *        Timer2 on pin 3 of the Uno, pin 9 of the Mega.
    *
    * It breaks analogWrite() on that pin. Each channel has a duty of its own.
    *

@@ -3,8 +3,8 @@
 
 /*!
  * \file
- * \brief Timer1Traits, Timer/Counter1 of the ATmega328P for the modes of a
- *        timer: its registers, its prescalers and its channels.
+ * \brief Timer1Traits, Timer/Counter1 of the ATmega328P and the ATmega2560 for
+ *        the modes of a timer: its registers, its prescalers and its channels.
  *
  * Apart from timer1.h, so that another object of Timer/Counter1 takes them
  * without timer1 and its interrupt.
@@ -21,9 +21,25 @@
 
 namespace atmega_timer {
 
+namespace internal {
+
+/*! \cond */
+// The Arduino pins of OC1A and OC1B, which lie elsewhere on the Mega than on
+// the Uno, as the core's pins_arduino.h of each has them.
+#ifdef __AVR_ATmega2560__
+constexpr uint8_t kOc1aPin{11};  // PB5
+constexpr uint8_t kOc1bPin{12};  // PB6
+#else
+constexpr uint8_t kOc1aPin{9};   // PB1
+constexpr uint8_t kOc1bPin{10};  // PB2
+#endif
+/*! \endcond */
+
+}  // namespace internal
+
 /*!
- * \brief Timer/Counter1 of the ATmega328P, for the modes of a timer: its
- *        registers, its prescalers and its channels.
+ * \brief Timer/Counter1 of the ATmega328P and the ATmega2560, for the modes of
+ *        a timer: its registers, its prescalers and its channels.
  *
  * PhaseCorrectPwmMode is phase and frequency correct PWM, mode 8, with ICR1 as
  * its top and OC1A and OC1B as its PWMs. Mode 8 takes the compare values at the
@@ -132,8 +148,8 @@ struct Timer1Traits {
 /*! \brief OC1A, channel A of Timer1. */
 template <>
 struct Timer1Traits::CompareOutput<Channel::kA> {
-  /*! \brief The Arduino pin of OC1A, PB1. */
-  static constexpr uint8_t kPin{9};
+  /*! \brief The Arduino pin of OC1A: 9 on the Uno, 11 on the Mega. */
+  static constexpr uint8_t kPin{internal::kOc1aPin};
   /*! \brief The bit of TCCR1A that connects OC1A: COM1A1, non-inverting. */
   static constexpr uint8_t kCompareOutputBit{COM1A1};
   /*! \brief The bit of TCCR1A that toggles OC1A at each match: COM1A0. */
@@ -145,8 +161,8 @@ struct Timer1Traits::CompareOutput<Channel::kA> {
 /*! \brief OC1B, channel B of Timer1. */
 template <>
 struct Timer1Traits::CompareOutput<Channel::kB> {
-  /*! \brief The Arduino pin of OC1B, PB2. */
-  static constexpr uint8_t kPin{10};
+  /*! \brief The Arduino pin of OC1B: 10 on the Uno, 12 on the Mega. */
+  static constexpr uint8_t kPin{internal::kOc1bPin};
   /*! \brief The bit of TCCR1A that connects OC1B: COM1B1, non-inverting. */
   static constexpr uint8_t kCompareOutputBit{COM1B1};
   /*! \brief The bit of TCCR1A that toggles OC1B at each match: COM1B0. */

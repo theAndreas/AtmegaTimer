@@ -3,11 +3,13 @@
 
 /*!
  * \file
- * \brief timer2_ctc, Timer/Counter2 of the ATmega328P in CTC.
+ * \brief timer2_ctc, Timer/Counter2 of the ATmega328P and the ATmega2560 in
+ *        CTC.
  *
- * It breaks analogWrite() on pins 3 and 11, and tone(), which use Timer2 as
- * well. Channel A toggles at the top, OCR2A; channel B at 0.
- * A sketch uses timer2_ctc or timer2, not both: with both it fails to link.
+ * It breaks analogWrite() on pins 3 and 11 of the Uno, 9 and 10 of the Mega,
+ * and tone(), which use Timer2 as well. Channel A toggles at the top, OCR2A;
+ * channel B at 0. A sketch uses timer2_ctc or timer2, not both: with both it
+ * fails to link.
  */
 
 #ifndef ATMEGATIMER_SRC_ATMEGA_TIMER_TIMER2_CTC_H_

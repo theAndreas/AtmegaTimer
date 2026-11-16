@@ -78,7 +78,7 @@ class Ctc
 
   /*!
    * \brief Toggles the pin of a channel once a period: channel B of Timer2 on
-   *        pin 3.
+   *        pin 3 of the Uno, pin 9 of the Mega.
    *
    * A square wave at half the frequency of the period, high for one period and
    * low for the next, made by the timer without the CPU. It breaks

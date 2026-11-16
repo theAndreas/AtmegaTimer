@@ -3,10 +3,12 @@
 
 /*!
  * \file
- * \brief timer1, Timer/Counter1 of the ATmega328P as a Timer.
+ * \brief timer1, Timer/Counter1 of the ATmega328P and the ATmega2560 as a
+ *        Timer.
  *
- * It breaks `Servo`, which runs on Timer1 on the ATmega328P, and analogWrite()
- * on pins 9 and 10. Both channels give a PWM of their own: ICR1 is the top.
+ * It breaks analogWrite() on pins 9 and 10 of the Uno, 11 and 12 of the Mega,
+ * and `Servo`, which runs on Timer1 on the Uno, and on the Mega from its 13th
+ * servo on. Both channels give a PWM of their own: ICR1 is the top.
  */
 
 #ifndef ATMEGATIMER_SRC_ATMEGA_TIMER_TIMER1_H_

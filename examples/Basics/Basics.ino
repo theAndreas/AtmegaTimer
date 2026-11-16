@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // Toggles the LED every millisecond from the overflow interrupt, and gives a
-// PWM of half the period on pin 3, whose frequency follows the period.
+// PWM of half the period on pin 3 of the Uno, pin 9 of the Mega, whose
+// frequency follows the period.
 
 #include <AtmegaTimer.h>
 #include <stdint.h>

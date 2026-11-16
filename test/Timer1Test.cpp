@@ -20,6 +20,7 @@
 #include "atmega_timer/core.h"
 #include "atmega_timer/phase_correct_pwm.h"
 #include "atmega_timer/status.h"
+#include "test/pins.h"
 #include "test/printers.h"  // IWYU pragma: keep
 
 namespace atmega_timer {
@@ -125,24 +126,24 @@ INSTANTIATE_TEST_SUITE_P(
       return std::string{period_case.param.name};
     });
 
-TEST_F(Timer1Test, EnablePwmOfChannelADrivesPin9) {
+TEST_F(Timer1Test, EnablePwmOfChannelADrivesOc1a) {
   ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
   EXPECT_EQ(timer().EnablePwm<Channel::kA>(512), Error::kOk);
 
-  EXPECT_EQ(mock_pin_mode[9], OUTPUT);
+  EXPECT_EQ(mock_pin_mode[kOc1aPin], OUTPUT);
   EXPECT_TRUE(BitIsSet(TCCR1A, COM1A1));
   EXPECT_FALSE(BitIsSet(TCCR1A, COM1A0));
   // 512 / 1023 of the top, 8000, rounded.
   EXPECT_EQ(OCR1A, 4004);
 }
 
-TEST_F(Timer1Test, EnablePwmOfChannelBDrivesPin10) {
+TEST_F(Timer1Test, EnablePwmOfChannelBDrivesOc1b) {
   ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
   EXPECT_EQ(timer().EnablePwm<Channel::kB>(256), Error::kOk);
 
-  EXPECT_EQ(mock_pin_mode[10], OUTPUT);
+  EXPECT_EQ(mock_pin_mode[kOc1bPin], OUTPUT);
   EXPECT_TRUE(BitIsSet(TCCR1A, COM1B1));
   EXPECT_FALSE(BitIsSet(TCCR1A, COM1B0));
   // 256 / 1023 of the top, 8000, rounded.

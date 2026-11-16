@@ -1,8 +1,9 @@
 # AtmegaTimer
 
 A periodic interrupt, a PWM on every channel a timer leaves free, and a time readout, on the
-16-bit Timer1 and the 8-bit Timer2 of the ATmega328P, as on the Arduino Uno and Nano. It
-continues [TimerTwo](https://github.com/theAndreas/TimerTwo) 2.0.0, which had Timer2 alone.
+16-bit Timer1 and the 8-bit Timer2 of the ATmega328P, as on the Arduino Uno and Nano, and of the
+ATmega2560 of the Arduino Mega. It continues [TimerTwo](https://github.com/theAndreas/TimerTwo)
+2.0.0, which had Timer2 alone.
 
 AtmegaTimer is in development and not yet in the Library Manager. Timer3 to Timer5 of the
 ATmega2560 of the Mega, and CTC as a second mode, come before 1.0.0;
@@ -11,10 +12,15 @@ which order.
 
 ## The timers
 
-| Timer | Mode | PWM on | Longest period at 16 MHz | Takes from the core |
-|---|---|---|---|---|
-| `timer1` | phase and frequency correct PWM, ICR1 the top | pin 9 (A), pin 10 (B) | 8388607 us, about 8.4 s | `Servo`, `analogWrite()` on pins 9 and 10 |
-| `timer2` | phase correct PWM, OCR2A the top | pin 3 (B) | 32767 us | `tone()`, `analogWrite()` on pins 3 and 11 |
+| Timer | Mode | PWM on the Uno | PWM on the Mega | Longest period at 16 MHz | Takes from the core |
+|---|---|---|---|---|---|
+| `timer1` | phase and frequency correct PWM, ICR1 the top | pin 9 (A), pin 10 (B) | pin 11 (A), pin 12 (B) | 8388607 us, about 8.4 s | `Servo`, on the Mega from its 13th servo on; `analogWrite()` on pins 9 and 10 of the Uno, 11 and 12 of the Mega |
+| `timer2` | phase correct PWM, OCR2A the top | pin 3 (B) | pin 9 (B) | 32767 us | `tone()`, `analogWrite()` on pins 3 and 11 of the Uno, 9 and 10 of the Mega |
+
+On the Mega, Timer1 has a third channel, OC1C on pin 13, which AtmegaTimer leaves out, as PJRC's
+TimerOne does: pin 13 is PB7, where the Output Compare Modulator joins OC1C with OC0A of Timer0,
+the timer of `millis()` and of `analogWrite(13)`. The pin gives the two ANDed or ORed, as PORTB7
+selects, not the PWM of Timer1 alone.
 
 A sketch links only the timers it uses, with their interrupts: one on Timer2 leaves Timer1 to
 `Servo`. Each channel has a duty of its own, from 0, always low, to 1023, always high, the same
@@ -29,7 +35,7 @@ Clone it into the `libraries` folder of your sketchbook, under the name `AtmegaT
 git clone https://github.com/theAndreas/AtmegaTimer ~/Arduino/libraries/AtmegaTimer
 ```
 
-It is built and checked for `arduino:avr:uno`.
+It is built and checked for `arduino:avr:uno` and `arduino:avr:mega`.
 
 ## Using it
 

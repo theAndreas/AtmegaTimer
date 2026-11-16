@@ -19,6 +19,7 @@
 #include "atmega_timer/core.h"
 #include "atmega_timer/status.h"
 #include "atmega_timer/timer2_traits.h"
+#include "test/pins.h"
 #include "test/printers.h"  // IWYU pragma: keep
 
 namespace atmega_timer {
@@ -152,25 +153,25 @@ INSTANTIATE_TEST_SUITE_P(
       return std::string{period_case.param.name};
     });
 
-TEST_F(CtcTest, EnableToggleOfChannelBToggles3AtTheBottom) {
+TEST_F(CtcTest, EnableToggleOfChannelBTogglesOc2bAtTheBottom) {
   ASSERT_EQ(timer().Begin(1000u), Error::kOk);
   OCR2B = 200;
 
   EXPECT_EQ(timer().EnableToggle<Channel::kB>(), Error::kOk);
 
-  EXPECT_EQ(mock_pin_mode[3], OUTPUT);
+  EXPECT_EQ(mock_pin_mode[kOc2bPin], OUTPUT);
   EXPECT_TRUE(BitIsSet(TCCR2A, COM2B0));
   EXPECT_FALSE(BitIsSet(TCCR2A, COM2B1));
   // At 0 the counter is in every period, whatever its top.
   EXPECT_EQ(OCR2B, 0);
 }
 
-TEST_F(CtcTest, EnableToggleOfChannelAToggles11AtTheTop) {
+TEST_F(CtcTest, EnableToggleOfChannelATogglesOc2aAtTheTop) {
   ASSERT_EQ(timer().Begin(1000u), Error::kOk);
 
   EXPECT_EQ(timer().EnableToggle<Channel::kA>(), Error::kOk);
 
-  EXPECT_EQ(mock_pin_mode[11], OUTPUT);
+  EXPECT_EQ(mock_pin_mode[kOc2aPin], OUTPUT);
   EXPECT_TRUE(BitIsSet(TCCR2A, COM2A0));
   EXPECT_FALSE(BitIsSet(TCCR2A, COM2A1));
   // OCR2A is the top, which the toggle leaves as it is.
@@ -183,7 +184,7 @@ TEST_F(CtcTest, EnableToggleIsRefusedBeforeBegin) {
   EXPECT_EQ(timer().EnableToggle<Channel::kB>(), Error::kNotBegun);
 
   EXPECT_EQ(TCCR2A, 0);
-  EXPECT_EQ(mock_pin_mode[3], INPUT);
+  EXPECT_EQ(mock_pin_mode[kOc2bPin], INPUT);
   EXPECT_EQ(OCR2B, 7);
 }
 
