@@ -1,12 +1,11 @@
 # AtmegaTimer
 
 A periodic interrupt, a PWM on every channel a timer leaves free, and a time readout, on the
-16-bit Timer1 and the 8-bit Timer2 of the ATmega328P, as on the Arduino Uno and Nano, and of the
-ATmega2560 of the Arduino Mega. It continues [TimerTwo](https://github.com/theAndreas/TimerTwo)
+16-bit Timer1 and the 8-bit Timer2 of the ATmega328P, as on the Arduino Uno and Nano, and on those
+and the 16-bit Timer3 to Timer5 of the ATmega2560 of the Arduino Mega. It continues [TimerTwo](https://github.com/theAndreas/TimerTwo)
 2.0.0, which had Timer2 alone.
 
-AtmegaTimer is in development and not yet in the Library Manager. Timer3 to Timer5 of the
-ATmega2560 of the Mega, and CTC as a second mode, come before 1.0.0;
+AtmegaTimer is in development and not yet in the Library Manager;
 [ROADMAP.md](https://github.com/theAndreas/AtmegaTimer/blob/main/ROADMAP.md) says what comes in
 which order.
 
@@ -16,6 +15,15 @@ which order.
 |---|---|---|---|---|---|
 | `timer1` | phase and frequency correct PWM, ICR1 the top | pin 9 (A), pin 10 (B) | pin 11 (A), pin 12 (B) | 8388607 us, about 8.4 s | `Servo`, on the Mega from its 13th servo on; `analogWrite()` on pins 9 and 10 of the Uno, 11 and 12 of the Mega |
 | `timer2` | phase correct PWM, OCR2A the top | pin 3 (B) | pin 9 (B) | 32767 us | `tone()`, `analogWrite()` on pins 3 and 11 of the Uno, 9 and 10 of the Mega |
+| `timer3` | phase and frequency correct PWM, ICR3 the top | none | pin 5 (A), pin 2 (B), pin 3 (C) | 8388607 us, about 8.4 s | `Servo` from its 25th servo on; `analogWrite()` on pins 2, 3 and 5 |
+| `timer4` | phase and frequency correct PWM, ICR4 the top | none | pin 6 (A), pin 7 (B), pin 8 (C) | 8388607 us, about 8.4 s | `Servo` from its 37th servo on; `analogWrite()` on pins 6, 7 and 8 |
+| `timer5` | phase and frequency correct PWM, ICR5 the top | none | pin 46 (A), pin 45 (B), pin 44 (C) | 8388607 us, about 8.4 s | `Servo`, from its first servo on; `analogWrite()` on pins 44, 45 and 46 |
+
+Each timer has an object in CTC as well, `timer1_ctc` to `timer5_ctc`, whose channels toggle
+their pins rather than give a PWM; a sketch takes one of the two objects of a timer. Timer3 to
+Timer5 are the ATmega2560's alone: on the Uno their headers declare nothing. `Servo` takes the
+timers of the Mega in the order Timer5, Timer1, Timer3, Timer4, twelve servos each, so a sketch
+with up to twelve servos leaves Timer1, Timer3 and Timer4 free.
 
 On the Mega, Timer1 has a third channel, OC1C on pin 13, which AtmegaTimer leaves out, as PJRC's
 TimerOne does: pin 13 is PB7, where the Output Compare Modulator joins OC1C with OC0A of Timer0,
@@ -24,8 +32,8 @@ selects, not the PWM of Timer1 alone.
 
 A sketch links only the timers it uses, with their interrupts: one on Timer2 leaves Timer1 to
 `Servo`. Each channel has a duty of its own, from 0, always low, to 1023, always high, the same
-on every timer. A new period keeps the share of each duty; on Timer1 it takes effect at the next
-bottom of the counter, so that no pulse of a PWM breaks off.
+on every timer. A new period keeps the share of each duty; on Timer1 and Timer3 to Timer5 it takes
+effect at the next bottom of the counter, so that no pulse of a PWM breaks off.
 
 ## Installing
 
