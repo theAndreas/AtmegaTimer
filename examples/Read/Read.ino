@@ -16,7 +16,7 @@ constexpr uint8_t kLedPin{LED_BUILTIN};
 constexpr uint32_t kBaudRate{115200};
 
 void OnTick() {
-  digitalWrite(kLedPin, digitalRead(kLedPin) == LOW ? HIGH : LOW);
+  digitalWrite(kLedPin, (digitalRead(kLedPin) == LOW) ? HIGH : LOW);
 }
 
 // Prints why a call was refused and stops there, as the rest would not work.

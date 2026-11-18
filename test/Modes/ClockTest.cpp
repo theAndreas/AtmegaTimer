@@ -98,7 +98,7 @@ TEST_F(ClockTest, EachPeriodIsMetWithinAStep) {
 
 TEST_F(ClockTest, APeriodShorterThanAStepIsRefused) {
   // One step up and one down at no prescaler: two clocks.
-  constexpr bool kOneMicrosecondIsAStep{2 * kMicrosecondsPerSecond <= kClock};
+  constexpr bool kOneMicrosecondIsAStep{(2 * kMicrosecondsPerSecond) <= kClock};
 
   EXPECT_EQ(timer().Begin(1u),
             kOneMicrosecondIsAStep ? Error::kOk : Error::kPeriodOutOfRange);
@@ -273,7 +273,7 @@ TEST_F(CtcClockTest, EachPeriodIsMetWithinAStep) {
 
 TEST_F(CtcClockTest, APeriodOfOneStepIsRefused) {
   // At no prescaler, 1 us is two clocks from 2 MHz on: a top of 1.
-  constexpr bool kOneMicrosecondIsTwoSteps{2 * kMicrosecondsPerSecond <=
+  constexpr bool kOneMicrosecondIsTwoSteps{(2 * kMicrosecondsPerSecond) <=
                                            kClock};
 
   EXPECT_EQ(timer().Begin(1u),

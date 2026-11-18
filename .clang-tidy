@@ -40,6 +40,7 @@ Checks: >
   -modernize-return-braced-init-list,
   -modernize-use-trailing-return-type,
   -readability-identifier-length,
+  -readability-math-missing-parentheses,
   -readability-named-parameter,
   -bugprone-dynamic-static-initializers
 # house-*: the checks of our own, in tools/lib/tidy_module/; tools/tidy.sh loads them. Without
@@ -74,6 +75,9 @@ Checks: >
 # modernize-use-trailing-return-type: Google puts the return type in front.
 # readability-identifier-length: Google allows `f` or `a` and `b` where the scope is a few
 #   lines.
+# readability-math-missing-parentheses: house-operator-precedence holds MISRA C++:2023 Rule 8.0.1
+#   in full, a comparison in a logical operator and the branches of ?: among it; this check holds
+#   only arithmetic and bits mixed, a part of it, and two names would report one place twice.
 # readability-named-parameter: Google leaves out the name of a parameter that is unused where
 #   the context explains it, as a tag type that only picks an overload.
 #
@@ -163,8 +167,10 @@ CheckOptions:
   # it, at times through a second one, as iom2560.h through iomxx0_1.h, which
   # include-cleaner does not take back to <avr/io.h>. Any core's folder, not
   # only cores/arduino/ of Arduino's: a third party's core has its own, as
-  # cores/xmega/ of XMegaForArduino's, where Serial comes from.
-  misc-include-cleaner.IgnoreHeaders: '.*/cores/[^/]+/.*;.*/variants/.*;.*/avr/io[^/]*\.h'
+  # cores/xmega/ of XMegaForArduino's, where Serial comes from. And
+  # avr/common.h, which <avr/io.h> includes as well, for the registers every
+  # AVR has, SREG and the stack pointer among them.
+  misc-include-cleaner.IgnoreHeaders: '.*/cores/[^/]+/.*;.*/variants/.*;.*/avr/io[^/]*\.h;.*/avr/common\.h'
   # Google's names, which readability-identifier-naming checks only once it is told them; the
   # same block in every project, so that every project names alike. Two exceptions Google
   # makes itself are general: an accessor is named like the variable it gives (group(),

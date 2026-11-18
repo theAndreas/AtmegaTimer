@@ -34,7 +34,7 @@ constexpr uint16_t kHalf{512};
 constexpr uint16_t kThreeQuarters{767};
 
 void ToggleLed() {
-  digitalWrite(kLedPin, digitalRead(kLedPin) == LOW ? HIGH : LOW);
+  digitalWrite(kLedPin, (digitalRead(kLedPin) == LOW) ? HIGH : LOW);
 }
 
 // Prints why a call was refused and stops there, as the rest would not work.
