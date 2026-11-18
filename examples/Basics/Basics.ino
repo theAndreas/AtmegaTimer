@@ -13,7 +13,7 @@ namespace {
 constexpr uint8_t kLedPin{LED_BUILTIN};
 
 void OnTick() {
-  digitalWrite(kLedPin, digitalRead(kLedPin) == LOW ? HIGH : LOW);
+  digitalWrite(kLedPin, (digitalRead(kLedPin) == LOW) ? HIGH : LOW);
 }
 
 }  // namespace

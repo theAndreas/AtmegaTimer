@@ -71,7 +71,7 @@ void ResetCalls() {
 
 void Wait(uint32_t microseconds) {
   uint32_t const start{micros()};
-  while (micros() - start < microseconds) {
+  while ((micros() - start) < microseconds) {
   }
 }
 

@@ -24,7 +24,7 @@ void OnMatch() {
     return;
   }
   periods = 0;
-  digitalWrite(kLedPin, digitalRead(kLedPin) == LOW ? HIGH : LOW);
+  digitalWrite(kLedPin, (digitalRead(kLedPin) == LOW) ? HIGH : LOW);
 }
 
 }  // namespace

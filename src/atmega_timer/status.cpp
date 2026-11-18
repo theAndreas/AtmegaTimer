@@ -39,7 +39,7 @@ char const* const kTexts[] PROGMEM{
 
 constexpr uint8_t kTextCount{sizeof(kTexts) / sizeof(kTexts[0])};
 
-static_assert(kTextCount == static_cast<uint8_t>(Error::kDutyOutOfRange) + 1,
+static_assert(kTextCount == (static_cast<uint8_t>(Error::kDutyOutOfRange) + 1),
               "every error has a text");
 
 }  // namespace
@@ -47,8 +47,8 @@ static_assert(kTextCount == static_cast<uint8_t>(Error::kDutyOutOfRange) + 1,
 __FlashStringHelper const* Status::GetErrorText() const {
   uint8_t const index{static_cast<uint8_t>(error_)};
   // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-  void const* const text{index < kTextCount ? pgm_read_ptr(&kTexts[index])
-                                            : kTextUnknownError};
+  void const* const text{(index < kTextCount) ? pgm_read_ptr(&kTexts[index])
+                                              : kTextUnknownError};
   // The type Serial.print() takes for a text in flash, as F() makes it.
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
   return reinterpret_cast<__FlashStringHelper const*>(text);
