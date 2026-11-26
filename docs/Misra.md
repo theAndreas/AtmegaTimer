@@ -277,7 +277,7 @@ PVS-Studio or Cppcheck Premium, fills the rows marked *Review* (ROADMAP I-4).
 | Id | Category | Topic | Covered by | Deviation |
 |---|---|---|---|---|
 | Rule 21.2.1 | Required | No `atof`, `atoi`, `atol`, `atoll` | `cert-err34-c` |  |
-| Rule 21.2.2 | Required | No C string functions | `bugprone-unsafe-functions`, by the list of `.clang-tidy` |  |
+| Rule 21.2.2 | Required | No C string functions | `bugprone-unsafe-functions`, by the list of `.clang-tidy` | The mock of `avr/pgmspace.h` counts a text in flash by `strlen()`, which avr-libc's `strlen_P()` is where flash is RAM, on the host, with a `NOLINT` |
 | Rule 21.2.3 | Required | No `system()` | `cert-env33-c` |  |
 | Rule 21.2.4 | Required | No `offsetof` | Review |  |
 | Rule 21.6.1 | Advisory | No dynamic memory | `cppcoreguidelines-no-malloc`, `cppcoreguidelines-owning-memory`, CodingStyle M-1 |  |
@@ -307,7 +307,7 @@ PVS-Studio or Cppcheck Premium, fills the rows marked *Review* (ROADMAP I-4).
 | Id | Category | Topic | Covered by | Deviation |
 |---|---|---|---|---|
 | Rule 24.5.1 | Required | No `<cctype>` functions | `bugprone-unsafe-functions`, by the list of `.clang-tidy` |  |
-| Rule 24.5.2 | Required | No `memcpy`, `memmove`, `memcmp` | `bugprone-unsafe-functions`, by the list of `.clang-tidy` | A fuzzer takes a value out of libFuzzer's bytes by `std::memcpy()`, the one way without undefined behaviour before C++20's `std::bit_cast`, with a `NOLINT` |
+| Rule 24.5.2 | Required | No `memcpy`, `memmove`, `memcmp` | `bugprone-unsafe-functions`, by the list of `.clang-tidy` | A fuzzer takes a value out of libFuzzer's bytes by `std::memcpy()`, the one way without undefined behaviour before C++20's `std::bit_cast`, with a `NOLINT`; the mock of `avr/pgmspace.h` reads a value from flash the same way, and its `memcpy_P()` and `memcmp_P()` are `memcpy()` and `memcmp()`, as flash is RAM on the host, with a `NOLINT` |
 
 ### Rules of chapter 25
 
